@@ -21,10 +21,11 @@ const SECTION_NAV_MAP = {
   'shop-info-section': { sidebar: 'sidebar-nav-shop-info', bottom: 'bottom-nav-shop-info' },
   'menu-section':      { sidebar: 'sidebar-nav-menu',      bottom: 'bottom-nav-menu' },
   'orders-section':    { sidebar: 'sidebar-nav-orders',    bottom: 'bottom-nav-orders' },
+  'about-section':     { sidebar: 'sidebar-nav-about',     bottom: 'bottom-nav-about' },
 };
 
 window.showSection = (sectionId) => {
-  ['shop-info-section', 'menu-section', 'orders-section'].forEach(id => {
+  ['shop-info-section', 'menu-section', 'orders-section', 'about-section'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.toggle('active', id === sectionId);
   });

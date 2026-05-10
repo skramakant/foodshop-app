@@ -215,6 +215,9 @@
         <button class="sidebar-nav-item" id="sidebar-nav-orders" onclick="showSection('orders-section')">
           <span class="nav-icon">📦</span> My Orders
         </button>
+        <button class="sidebar-nav-item" id="sidebar-nav-about" onclick="showSection('about-section')">
+          <span class="nav-icon">✨</span> About InstaShop
+        </button>
       </nav>
     </aside>
 
@@ -272,8 +275,7 @@
       </section>
 
       <!-- ── My Orders Section ── -->
-      <section id="orders-section" class="content-section px-4 pt-5 pb-10 max-w-2xl mx-auto w-full">
-        <h2 class="text-xl font-bold text-slate-800 mb-1">My Orders</h2>
+      <section id="orders-section" class="content-section px-4 pt-5 pb-10 max-w-2xl mx-auto w-full">        <h2 class="text-xl font-bold text-slate-800 mb-1">My Orders</h2>
         <p class="text-sm text-slate-400 mb-6">Enter the WhatsApp number and 6-digit PIN from your order confirmation message.</p>
 
         <div class="card p-5 mb-5">
@@ -299,6 +301,83 @@
         <div id="track-results" class="hidden flex flex-col gap-3"></div>
       </section>
 
+      <!-- ── About InstaShop Section ── -->
+      <section id="about-section" class="content-section px-4 pt-5 pb-10 max-w-2xl mx-auto w-full">
+
+        <!-- Hero card -->
+        <div class="rounded-3xl overflow-hidden mb-5" style="background: linear-gradient(135deg, #1e293b 0%, #0f766e 100%);">
+          <div class="px-6 py-8 text-white">
+            <div class="text-4xl mb-3">🛍️</div>
+            <h1 class="text-2xl font-extrabold mb-1 tracking-tight">InstaShop</h1>
+            <p class="text-sm text-white/70 font-medium">Your shop, online, simplified.</p>
+          </div>
+        </div>
+
+        <!-- Description card -->
+        <div class="card p-5 mb-4">
+          <p class="text-slate-600 leading-relaxed text-sm">
+            Help your customers find you where they already are—on their phones.
+            <strong class="text-slate-800">InstaShop</strong> helps you launch your online shop today.
+            You manage orders through a simple Admin panel, and your customers get a
+            no-login-needed app to buy from you instantly.
+          </p>
+          <p class="text-slate-600 leading-relaxed text-sm mt-3">
+            Reach a larger audience and make ordering effortless.
+            <strong class="text-slate-800">InstaShop: Your shop, online, simplified.</strong>
+          </p>
+        </div>
+
+        <!-- Features -->
+        <div class="grid grid-cols-1 gap-3 mb-5">
+          <div class="card p-4 flex items-start gap-3">
+            <span class="text-2xl flex-shrink-0">📱</span>
+            <div>
+              <div class="font-bold text-slate-800 text-sm">Mobile-First</div>
+              <div class="text-xs text-slate-500 mt-0.5">Beautiful on every phone, no app download needed</div>
+            </div>
+          </div>
+          <div class="card p-4 flex items-start gap-3">
+            <span class="text-2xl flex-shrink-0">📲</span>
+            <div>
+              <div class="font-bold text-slate-800 text-sm">WhatsApp Orders</div>
+              <div class="text-xs text-slate-500 mt-0.5">Orders land directly in your WhatsApp — no extra tools</div>
+            </div>
+          </div>
+          <div class="card p-4 flex items-start gap-3">
+            <span class="text-2xl flex-shrink-0">⚡</span>
+            <div>
+              <div class="font-bold text-slate-800 text-sm">Launch Today</div>
+              <div class="text-xs text-slate-500 mt-0.5">Set up your shop in minutes, start selling immediately</div>
+            </div>
+          </div>
+          <div class="card p-4 flex items-start gap-3">
+            <span class="text-2xl flex-shrink-0">🔒</span>
+            <div>
+              <div class="font-bold text-slate-800 text-sm">No Login Needed</div>
+              <div class="text-xs text-slate-500 mt-0.5">Customers order instantly — zero friction, zero sign-ups</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact card -->
+        <div class="rounded-2xl p-5" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7);">
+          <div class="text-sm font-bold text-green-800 mb-3">🚀 Get Your Own Shop</div>
+          <p class="text-sm text-green-700 mb-4">Reach out to <strong>Ramakant</strong> to get your own InstaShop set up today.</p>
+          <div class="flex flex-col gap-2">
+            <a href="mailto:ramakant.singh17@gmail.com"
+               class="flex items-center gap-2 bg-white rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm hover:shadow-md transition-shadow">
+              <span class="text-lg">✉️</span> ramakant.singh17@gmail.com
+            </a>
+            <a href="https://wa.me/917045788997"
+               class="flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-sm"
+               style="background:#25d366">
+              <span class="text-lg">📲</span> WhatsApp: 7045788997
+            </a>
+          </div>
+        </div>
+
+      </section>
+
     </div><!-- /.content-area -->
 
   </div><!-- /.app-layout -->
@@ -319,6 +398,9 @@
       </button>
       <button class="bottom-nav-item" id="bottom-nav-orders" onclick="showSection('orders-section')">
         <span class="nav-icon">📦</span>My Orders
+      </button>
+      <button class="bottom-nav-item" id="bottom-nav-about" onclick="showSection('about-section')">
+        <span class="nav-icon">✨</span>About
       </button>
     </div>
   </nav>
