@@ -88,7 +88,7 @@ window.switchTab = (tabId) => {
 async function loadSettings() {
   try {
     const res = await API.getShopMetadata();
-    const data = res.result;
+    const data = res;
     document.getElementById('shop-loading').classList.add('hidden');
     document.getElementById('settings-form').classList.remove('hidden');
     document.getElementById('s-shop-name').value = data.shop_name || '';
@@ -142,7 +142,7 @@ async function loadFoodItems() {
   document.getElementById('food-list').classList.add('hidden');
   try {
     const res = await API.getFoodItems();
-    renderFoodItems(res.result || []);
+    renderFoodItems(res || []);
   } catch (err) {
     document.getElementById('food-loading').classList.add('hidden');
     showError(err);
@@ -247,7 +247,7 @@ window.deleteItem = async (id) => {
 async function loadOrders() {
   try {
     const res  = await API.getOrdersWithTodayCounts();
-    const data = res.result;
+    const data = res;
     document.getElementById('orders-loading').classList.add('hidden');
     document.getElementById('orders-content').classList.remove('hidden');
 
@@ -314,7 +314,7 @@ window.handleStatusChange = async (orderId, newStatus, selectEl) => {
 async function loadUsers() {
   try {
     const res   = await API.getUsers();
-    const users = res.result || [];
+    const users = res || [];
     document.getElementById('users-loading').classList.add('hidden');
     const list  = document.getElementById('users-list');
     const empty = document.getElementById('users-empty');
