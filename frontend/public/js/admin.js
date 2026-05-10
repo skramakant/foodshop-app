@@ -5,7 +5,33 @@
 import * as API from './api.js';
 import { escapeHtml, formatPrice, setCurrency, formatTimestamp, validateFoodItem, validateShopSettings } from './utils.js';
 
-// ── Auth ───────────────────────────────────────────────────────────────────
+// ── Auth with 24h session persistence ─────────────────────────────────────
+const SESSION_KEY = 'admin_session';
+const SESSION_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+function saveSession() {
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ ts: Date.now() }));
+}
+
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return false;
+    const { ts } = JSON.parse(raw);
+    return (Date.now() - ts) < SESSION_TTL;
+  } catch { return false; }
+}
+
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+}
+
+function showPortal() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('admin-portal').classList.remove('hidden');
+  switchTab('shop');
+}
+
 window.handleLogin = async () => {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
@@ -21,9 +47,8 @@ window.handleLogin = async () => {
   try {
     const res = await API.checkAdminAuth(username, password);
     if (res?.success) {
-      document.getElementById('login-screen').classList.add('hidden');
-      document.getElementById('admin-portal').classList.remove('hidden');
-      switchTab('shop');
+      saveSession();
+      showPortal();
     } else {
       errEl.textContent = 'Invalid username or password.';
       btn.disabled = false;
@@ -37,6 +62,7 @@ window.handleLogin = async () => {
 };
 
 window.handleLogout = () => {
+  clearSession();
   document.getElementById('admin-portal').classList.add('hidden');
   document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('login-username').value = '';
@@ -47,11 +73,13 @@ window.handleLogout = () => {
   settingsLoaded = ordersLoaded = usersLoaded = false;
 };
 
-// Enter key on login
+// Enter key on login + auto-login if session valid
 document.addEventListener('DOMContentLoaded', () => {
   ['login-username', 'login-password'].forEach(id => {
     document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
   });
+  // Auto-restore session
+  if (loadSession()) showPortal();
 });
 
 // ── Error banner ───────────────────────────────────────────────────────────
@@ -251,43 +279,74 @@ async function loadOrders() {
     document.getElementById('orders-loading').classList.add('hidden');
     document.getElementById('orders-content').classList.remove('hidden');
 
-    const counts = data.today_counts || {};
+    const orders = data.orders || [];
+
+    // All-time counts by current status
+    const counts = { received: 0, payment_received: 0, in_progress: 0, completed: 0 };
+    orders.forEach(o => { if (counts.hasOwnProperty(o.status)) counts[o.status]++; });
     ['received','payment_received','in_progress','completed'].forEach(s => {
-      document.getElementById(`count-${s}`).textContent = counts[s] || 0;
+      document.getElementById(`count-${s}`).textContent = counts[s];
     });
 
-    const orders = data.orders || [];
-    const list   = document.getElementById('orders-list');
-    const empty  = document.getElementById('orders-empty');
+    // Today's counts by current status
+    const todayStr = new Date().toDateString();
+    const todayCounts = { received: 0, payment_received: 0, in_progress: 0, completed: 0 };
+    orders.forEach(o => {
+      if (new Date(o.timestamp).toDateString() === todayStr && todayCounts.hasOwnProperty(o.status)) {
+        todayCounts[o.status]++;
+      }
+    });
+    ['received','payment_received','in_progress','completed'].forEach(s => {
+      document.getElementById(`today-count-${s}`).textContent = todayCounts[s];
+    });
+    document.getElementById('today-date').textContent = new Date().toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+
+    const list  = document.getElementById('orders-list');
+    const empty = document.getElementById('orders-empty');
     if (!orders.length) { empty.classList.remove('hidden'); return; }
     empty.classList.add('hidden');
 
     const statusOptions = ['received','payment_received','in_progress','completed'];
-    list.innerHTML = orders.map(order => {
+    const statusLabels  = { received: 'Received', payment_received: 'Payment Received', in_progress: 'In Progress', completed: 'Completed' };
+
+    list.innerHTML = orders.slice().reverse().map(order => {
       let cartItems = [];
       try { cartItems = typeof order.cart_details === 'string' ? JSON.parse(order.cart_details) : order.cart_details; } catch {}
       const itemsHtml = Array.isArray(cartItems)
-        ? cartItems.map(ci => `<li class="text-xs text-slate-500">${escapeHtml(ci.name)} ×${ci.quantity}</li>`).join('')
+        ? cartItems.map(ci => `<span class="inline-flex items-center gap-1 bg-white border border-slate-100 rounded-lg px-2 py-1 text-xs text-slate-600">${escapeHtml(ci.name)} <strong>×${ci.quantity}</strong></span>`).join('')
         : '';
       const selectHtml = `<select onchange="handleStatusChange('${escapeHtml(order.order_id)}', this.value, this)"
-        class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white cursor-pointer">
-        ${statusOptions.map(s => `<option value="${s}" ${order.status === s ? 'selected' : ''}>${s.replace(/_/g,' ')}</option>`).join('')}
+        class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white cursor-pointer font-medium">
+        ${statusOptions.map(s => `<option value="${s}" ${order.status === s ? 'selected' : ''}>${statusLabels[s]}</option>`).join('')}
       </select>`;
+
       return `
-        <div class="bg-slate-50 rounded-xl border border-slate-100 p-4 flex flex-col gap-2">
-          <div class="flex items-start justify-between gap-2 flex-wrap">
-            <code class="text-xs bg-slate-200 text-slate-600 px-2 py-1 rounded font-mono break-all flex-1">${escapeHtml(order.order_id)}</code>
-            ${selectHtml}
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <!-- Order header -->
+          <div class="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100 gap-3 flex-wrap">
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="status-badge status-${order.status}">${statusLabels[order.status] || order.status}</span>
+              <code class="text-xs text-slate-400 font-mono truncate max-w-[120px]">#${escapeHtml(order.order_id.slice(0,8))}</code>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <span class="font-bold text-teal-700 text-sm">${formatPrice(order.total_price)}</span>
+              ${selectHtml}
+            </div>
           </div>
-          <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-            <div><span class="text-slate-400 text-xs">Customer</span><div class="font-medium">${escapeHtml(order.customer_name)}</div></div>
-            <div><span class="text-slate-400 text-xs">WhatsApp</span><div class="font-medium">${escapeHtml(order.customer_whatsapp)}</div></div>
-            <div class="col-span-2"><span class="text-slate-400 text-xs">Address</span><div class="font-medium">${escapeHtml(order.customer_address)}</div></div>
-          </div>
-          ${itemsHtml ? `<ul class="bg-white rounded-lg p-2 border border-slate-100">${itemsHtml}</ul>` : ''}
-          <div class="flex justify-between items-center">
-            <span class="font-bold text-teal-700">${formatPrice(order.total_price)}</span>
-            <span class="text-xs text-slate-400">${formatTimestamp(order.timestamp)}</span>
+          <!-- Customer info -->
+          <div class="px-4 py-3 flex flex-col gap-1.5">
+            <div class="flex items-center gap-2 text-sm">
+              <span class="text-slate-400 w-5">👤</span>
+              <span class="font-semibold text-slate-800">${escapeHtml(order.customer_name)}</span>
+              <span class="text-slate-400 text-xs ml-auto">${formatTimestamp(order.timestamp)}</span>
+            </div>
+            <div class="flex items-center gap-2 text-sm text-slate-600">
+              <span class="text-slate-400 w-5">📞</span>${escapeHtml(order.customer_whatsapp)}
+            </div>
+            <div class="flex items-start gap-2 text-sm text-slate-600">
+              <span class="text-slate-400 w-5 mt-0.5">📍</span><span>${escapeHtml(order.customer_address)}</span>
+            </div>
+            ${itemsHtml ? `<div class="flex flex-wrap gap-1.5 mt-1">${itemsHtml}</div>` : ''}
           </div>
         </div>`;
     }).join('');
