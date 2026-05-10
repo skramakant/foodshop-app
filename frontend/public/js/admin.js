@@ -20,7 +20,7 @@ window.handleLogin = async () => {
 
   try {
     const res = await API.checkAdminAuth(username, password);
-    if (res?.result?.success) {
+    if (res?.success) {
       document.getElementById('login-screen').classList.add('hidden');
       document.getElementById('admin-portal').classList.remove('hidden');
       switchTab('shop');
