@@ -28,28 +28,44 @@ function placeOrder(orderData) {
     if (!ordersSheet) throw new Error('Sheet "' + SHEET_ORDERS + '" not found.');
     ordersSheet.appendRow(orderToRow(orderData, orderId, 'received', timestamp));
 
-    // 2. Upsert users sheet — generate PIN for new users, preserve for returning
+    // 2. Upsert users sheet — WhatsApp number is the ONLY unique key
+    //    Deduplicate: if multiple rows exist for same number, keep first, delete rest
     var usersSheet = ss.getSheetByName(SHEET_USERS);
     if (!usersSheet) throw new Error('Sheet "' + SHEET_USERS + '" not found.');
 
-    var userRows    = usersSheet.getDataRange().getValues();
-    var foundRowIdx = -1;
-    var existingPin = '';
+    var userRows     = usersSheet.getDataRange().getValues();
+    var matchedRows  = []; // all row indices (1-based) matching this WhatsApp
 
     for (var i = 1; i < userRows.length; i++) {
       if (String(userRows[i][0]) === String(orderData.customer_whatsapp)) {
-        foundRowIdx = i + 1;
-        existingPin = String(userRows[i][5] || ''); // col 5 = pin
-        break;
+        matchedRows.push(i + 1); // 1-based sheet row
       }
     }
 
-    // Generate a 6-digit PIN if this is a new user or pin is missing
+    // Delete duplicate rows (keep only the first match, delete the rest bottom-up)
+    if (matchedRows.length > 1) {
+      for (var d = matchedRows.length - 1; d >= 1; d--) {
+        usersSheet.deleteRow(matchedRows[d]);
+      }
+      // Re-read after deletion
+      userRows = usersSheet.getDataRange().getValues();
+      matchedRows = [];
+      for (var k = 1; k < userRows.length; k++) {
+        if (String(userRows[k][0]) === String(orderData.customer_whatsapp)) {
+          matchedRows.push(k + 1);
+        }
+      }
+    }
+
+    var foundRowIdx = matchedRows.length > 0 ? matchedRows[0] : -1;
+    var existingPin = foundRowIdx !== -1 ? String(userRows[foundRowIdx - 1][5] || '') : '';
+
+    // PIN is generated once and never changes for a WhatsApp number
     var pin = existingPin || String(Math.floor(100000 + Math.random() * 900000));
 
     if (foundRowIdx !== -1) {
       var currentCount = Number(userRows[foundRowIdx - 1][3]) || 0;
-      // Update name(2), address(3), order_count(4), last_updated(5), pin(6)
+      // Update name(col2), address(col3), order_count(col4), last_updated(col5), pin(col6)
       usersSheet.getRange(foundRowIdx, 2, 1, 5).setValues([
         [orderData.customer_name, orderData.customer_address, currentCount + 1, timestamp, pin]
       ]);
@@ -177,5 +193,29 @@ function getOrdersByPin(whatsapp, pin) {
     return { orders: orders };
   } catch (e) {
     throw new Error('getOrdersByPin failed: ' + e.message);
+  }
+}
+
+/**
+ * Returns all orders for a WhatsApp number — admin use only (no PIN check).
+ *
+ * @param {string} whatsapp
+ * @returns {Array}
+ */
+function getOrdersByWhatsAppAdmin(whatsapp) {
+  try {
+    var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHEET_ORDERS);
+    if (!sheet) throw new Error('Sheet "' + SHEET_ORDERS + '" not found.');
+    var rows   = sheet.getDataRange().getValues();
+    var orders = [];
+    for (var i = 1; i < rows.length; i++) {
+      if (rows[i][0] && String(rows[i][4]) === String(whatsapp)) {
+        orders.push(rowToOrder(rows[i]));
+      }
+    }
+    return orders;
+  } catch (e) {
+    throw new Error('getOrdersByWhatsAppAdmin failed: ' + e.message);
   }
 }

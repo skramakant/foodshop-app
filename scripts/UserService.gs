@@ -19,12 +19,20 @@ function getUsers() {
     var sheet = ss.getSheetByName(SHEET_USERS);
     if (!sheet) throw new Error('Sheet "' + SHEET_USERS + '" not found.');
 
-    var rows  = sheet.getDataRange().getValues();
-    var users = [];
-    for (var i = 1; i < rows.length; i++) {       // i=0 is the header row
-      if (rows[i][0]) users.push(rowToUser(rows[i]));
+    var rows = sheet.getDataRange().getValues();
+
+    // Deduplicate by WhatsApp number — keep the row with highest order_count
+    var seen = {};
+    for (var i = 1; i < rows.length; i++) {
+      if (!rows[i][0]) continue;
+      var wa    = String(rows[i][0]);
+      var count = Number(rows[i][3]) || 0;
+      if (!seen[wa] || count > (Number(seen[wa][3]) || 0)) {
+        seen[wa] = rows[i];
+      }
     }
-    return users;
+
+    return Object.values(seen).map(function(row) { return rowToUser(row); });
   } catch (e) {
     throw new Error('getUsers failed: ' + e.message);
   }

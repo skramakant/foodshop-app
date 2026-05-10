@@ -28,8 +28,10 @@ var ACTION_MAP = {
   getUsers:         function()     { return getUsers(); },
   // Auth
   checkAdminAuth:   function(p)    { return checkAdminAuth(p.username, p.password); },
-  // Order tracking
+  // Order tracking (customer — requires PIN)
   getOrdersByPin: function(p) { return getOrdersByPin(p.whatsapp, p.pin); },
+  // Order lookup by WhatsApp (admin — no PIN required, already authenticated)
+  getOrdersByWhatsAppAdmin: function(p) { return getOrdersByWhatsAppAdmin(p.whatsapp); },
 };
 
 // Actions that require admin credentials in addition to the API key

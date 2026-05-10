@@ -45,6 +45,7 @@ export const getUsers = () => gasRequest('getUsers');
 
 // ── Order tracking ─────────────────────────────────────────────────────────
 export const getOrdersByPin = (whatsapp, pin) => gasRequest('getOrdersByPin', { whatsapp, pin });
+export const getOrdersByWhatsAppAdmin = (whatsapp) => gasRequest('getOrdersByWhatsAppAdmin', { whatsapp });
 
 // ── Auth ───────────────────────────────────────────────────────────────────
 export const checkAdminAuth = (username, password) =>

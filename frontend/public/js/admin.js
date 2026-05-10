@@ -458,21 +458,104 @@ async function loadUsers() {
     if (!users.length) { empty.classList.remove('hidden'); return; }
     empty.classList.add('hidden');
     list.classList.remove('hidden');
-    list.innerHTML = users.map(user => `
-      <div class="bg-slate-50 rounded-xl border border-slate-100 p-4 flex items-center gap-3">
-        <div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-lg flex-shrink-0">👤</div>
-        <div class="flex-1 min-w-0">
-          <div class="font-semibold text-slate-800">${escapeHtml(user.name || '—')}</div>
-          <div class="text-xs text-slate-400 mt-0.5">${escapeHtml(user.whatsapp_number)}</div>
-          <div class="text-xs text-slate-400 truncate">${escapeHtml(user.address || '')}</div>
+    list.innerHTML = users.map((user, idx) => `
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <!-- Customer summary row — click to expand -->
+        <div class="flex items-center gap-3 p-4 cursor-pointer hover:bg-slate-50 transition-colors"
+             onclick="toggleCustomerDetail(${idx})">
+          <div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center text-lg flex-shrink-0">👤</div>
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-slate-800">${escapeHtml(user.name || '—')}</div>
+            <div class="text-xs text-slate-400 mt-0.5">📞 ${escapeHtml(user.whatsapp_number)}</div>
+          </div>
+          <div class="flex items-center gap-3 flex-shrink-0">
+            <div class="text-center">
+              <div class="text-xl font-extrabold text-slate-800">${user.order_count || 0}</div>
+              <div class="text-xs text-slate-400">orders</div>
+            </div>
+            <span id="chevron-${idx}" class="text-slate-400 text-lg transition-transform">▸</span>
+          </div>
         </div>
-        <div class="text-center flex-shrink-0">
-          <div class="text-2xl font-extrabold text-slate-800">${user.order_count || 0}</div>
-          <div class="text-xs text-slate-400">orders</div>
+        <!-- Expandable detail panel -->
+        <div id="customer-detail-${idx}" class="hidden border-t border-slate-100">
+          <div class="px-4 py-3 bg-slate-50 flex flex-col gap-2">
+            <div class="flex flex-wrap gap-4 text-sm">
+              <div><span class="text-slate-400 text-xs">WhatsApp</span><div class="font-medium">${escapeHtml(user.whatsapp_number)}</div></div>
+              <div><span class="text-slate-400 text-xs">Address</span><div class="font-medium">${escapeHtml(user.address || '—')}</div></div>
+              <div><span class="text-slate-400 text-xs">PIN</span>
+                <div class="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded inline-block">${escapeHtml(user.pin || '—')}</div>
+              </div>
+            </div>
+          </div>
+          <div id="customer-orders-${idx}" class="px-4 py-3 flex flex-col gap-2">
+            <div class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Order History</div>
+            <div class="text-center py-4 text-slate-400 text-sm">⏳ Loading orders…</div>
+          </div>
         </div>
       </div>`).join('');
+
+    // Store users data for use in toggle
+    list.dataset.users = JSON.stringify(users);
   } catch (err) {
     document.getElementById('users-loading').classList.add('hidden');
     showError(err);
   }
 }
+
+window.toggleCustomerDetail = async (idx) => {
+  const detail  = document.getElementById(`customer-detail-${idx}`);
+  const chevron = document.getElementById(`chevron-${idx}`);
+  const isOpen  = !detail.classList.contains('hidden');
+
+  if (isOpen) {
+    detail.classList.add('hidden');
+    chevron.style.transform = '';
+    return;
+  }
+
+  detail.classList.remove('hidden');
+  chevron.style.transform = 'rotate(90deg)';
+
+  // Load orders for this customer
+  const list  = document.getElementById('users-list');
+  const users = JSON.parse(list.dataset.users || '[]');
+  const user  = users[idx];
+  if (!user) return;
+
+  const ordersEl = document.getElementById(`customer-orders-${idx}`);
+  try {
+    const orders = await API.getOrdersByWhatsAppAdmin(user.whatsapp_number);
+    if (!orders || !orders.length) {
+      ordersEl.innerHTML = '<div class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-1">Order History</div><div class="text-center py-4 text-slate-400 text-sm">No orders found.</div>';
+      return;
+    }
+
+    const statusLabels = { received: 'Received', payment_received: 'Payment Received', in_progress: 'In Progress', completed: 'Completed' };
+    const statusColors = { received: '#1d4ed8', payment_received: '#6d28d9', in_progress: '#c2410c', completed: '#15803d' };
+    const statusBg     = { received: '#dbeafe', payment_received: '#ede9fe', in_progress: '#ffedd5', completed: '#dcfce7' };
+
+    ordersEl.innerHTML = `<div class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-2">Order History (${orders.length})</div>` +
+      orders.slice().reverse().map(order => {
+        let cartItems = [];
+        try { cartItems = typeof order.cart_details === 'string' ? JSON.parse(order.cart_details) : order.cart_details; } catch {}
+        const itemsText = Array.isArray(cartItems) ? cartItems.map(ci => `${escapeHtml(ci.name)} ×${ci.quantity}`).join(', ') : '';
+        const statusLabel = statusLabels[order.status] || order.status;
+        const statusColor = statusColors[order.status] || '#475569';
+        const statusBgCol = statusBg[order.status] || '#f1f5f9';
+        const date = order.timestamp ? new Date(order.timestamp).toLocaleDateString() : '';
+        return `
+          <div class="rounded-xl border border-slate-100 overflow-hidden mb-2">
+            <div class="flex items-center justify-between px-3 py-2" style="background:${statusBgCol}">
+              <span class="text-xs font-bold" style="color:${statusColor}">${statusLabel}</span>
+              <span class="text-xs text-slate-400">${date}</span>
+            </div>
+            <div class="px-3 py-2 flex justify-between items-start gap-2">
+              <div class="text-xs text-slate-500 flex-1">${itemsText}</div>
+              <div class="font-bold text-teal-700 text-sm whitespace-nowrap">${formatPrice(order.total_price)}</div>
+            </div>
+          </div>`;
+      }).join('');
+  } catch (err) {
+    ordersEl.innerHTML = '<div class="text-xs text-red-400 py-2">Failed to load orders.</div>';
+  }
+};
