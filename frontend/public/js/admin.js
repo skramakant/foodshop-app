@@ -99,6 +99,7 @@ window.dismissError = () => {
 
 // ── Tab switching ──────────────────────────────────────────────────────────
 let settingsLoaded = false, ordersLoaded = false, usersLoaded = false;
+let ordersRefreshTimer = null;
 
 window.switchTab = (tabId) => {
   ['shop', 'food', 'orders', 'users'].forEach(id => {
@@ -108,9 +109,70 @@ window.switchTab = (tabId) => {
   });
   if (tabId === 'shop'   && !settingsLoaded) { loadSettings(); settingsLoaded = true; }
   if (tabId === 'food')                       { loadFoodItems(); }
-  if (tabId === 'orders' && !ordersLoaded)   { loadOrders();   ordersLoaded = true; }
-  if (tabId === 'users'  && !usersLoaded)    { loadUsers();    usersLoaded = true; }
+  if (tabId === 'orders') {
+    if (!ordersLoaded) { loadOrders(); ordersLoaded = true; }
+    startOrdersAutoRefresh();
+  } else {
+    stopOrdersAutoRefresh();
+  }
+  if (tabId === 'users' && !usersLoaded) { loadUsers(); usersLoaded = true; }
 };
+
+// ── Orders auto-refresh ────────────────────────────────────────────────────
+let lastOrderCount = 0;
+
+function startOrdersAutoRefresh() {
+  stopOrdersAutoRefresh();
+  ordersRefreshTimer = setInterval(() => {
+    refreshOrders();
+  }, 60 * 1000); // every 60 seconds
+}
+
+function stopOrdersAutoRefresh() {
+  if (ordersRefreshTimer) { clearInterval(ordersRefreshTimer); ordersRefreshTimer = null; }
+}
+
+async function refreshOrders() {
+  try {
+    const res    = await API.getOrdersWithTodayCounts();
+    const orders = res.orders || [];
+    const newCount = orders.length;
+    if (lastOrderCount > 0 && newCount > lastOrderCount) {
+      const diff = newCount - lastOrderCount;
+      showNewOrderNotification(diff);
+    }
+    renderOrders(res);
+  } catch (err) { /* silent refresh — don't show error on background poll */ }
+}
+
+function showNewOrderNotification(count) {
+  const banner = document.getElementById('new-order-banner');
+  document.getElementById('new-order-text').textContent =
+    `${count} new order${count > 1 ? 's' : ''} received!`;
+  banner.classList.remove('hidden');
+  playNotificationSound();
+  // Auto-hide after 8 seconds
+  setTimeout(() => banner.classList.add('hidden'), 8000);
+}
+
+function playNotificationSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Play two quick beeps
+    [0, 0.25].forEach(delay => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.4, ctx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.3);
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + 0.3);
+    });
+  } catch (e) { /* audio not supported */ }
+}
 
 // ── Shop tab ───────────────────────────────────────────────────────────────
 async function loadSettings() {
@@ -274,12 +336,18 @@ window.deleteItem = async (id) => {
 // ── Orders tab ─────────────────────────────────────────────────────────────
 async function loadOrders() {
   try {
-    const res  = await API.getOrdersWithTodayCounts();
-    const data = res;
+    const res = await API.getOrdersWithTodayCounts();
     document.getElementById('orders-loading').classList.add('hidden');
     document.getElementById('orders-content').classList.remove('hidden');
+    renderOrders(res);
+  } catch (err) {
+    document.getElementById('orders-loading').classList.add('hidden');
+    showError(err);
+  }
+}
 
-    const orders = data.orders || [];
+function renderOrders(data) {
+  const orders = data.orders || [];
 
     // All-time counts by current status
     const counts = { received: 0, payment_received: 0, in_progress: 0, completed: 0 };
@@ -350,10 +418,9 @@ async function loadOrders() {
           </div>
         </div>`;
     }).join('');
-  } catch (err) {
-    document.getElementById('orders-loading').classList.add('hidden');
-    showError(err);
-  }
+
+  // Track order count for new-order detection
+  lastOrderCount = orders.length;
 }
 
 window.handleStatusChange = async (orderId, newStatus, selectEl) => {

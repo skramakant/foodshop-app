@@ -124,6 +124,12 @@
 
       <!-- Orders Tab -->
       <section id="tab-orders" class="tab-section hidden">
+        <!-- New order notification banner -->
+        <div id="new-order-banner" class="hidden mx-0 mb-4 bg-green-50 border border-green-200 text-green-800 rounded-2xl px-4 py-3 flex items-center gap-3">
+          <span class="text-2xl">🔔</span>
+          <span id="new-order-text" class="flex-1 font-semibold text-sm"></span>
+          <button onclick="document.getElementById('new-order-banner').classList.add('hidden')" class="text-green-500 text-lg font-bold">✕</button>
+        </div>
         <div id="orders-loading" class="card p-5 text-center text-slate-400">⏳ Loading orders…</div>
         <div id="orders-content" class="hidden flex flex-col gap-4">
 
