@@ -129,3 +129,30 @@ function updateOrderStatus(orderId, status) {
     throw new Error('updateOrderStatus failed: ' + e.message);
   }
 }
+
+/**
+ * Returns all orders for a given customer WhatsApp number.
+ * Called by: customer portal Track Order section
+ *
+ * @param {string} whatsapp
+ * @returns {Array}
+ */
+function getOrdersByWhatsApp(whatsapp) {
+  try {
+    var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheetByName(SHEET_ORDERS);
+    if (!sheet) throw new Error('Sheet "' + SHEET_ORDERS + '" not found.');
+
+    var rows   = sheet.getDataRange().getValues();
+    var orders = [];
+    for (var i = 1; i < rows.length; i++) {
+      // col index 4 = customer_whatsapp
+      if (rows[i][0] && String(rows[i][4]) === String(whatsapp)) {
+        orders.push(rowToOrder(rows[i]));
+      }
+    }
+    return orders;
+  } catch (e) {
+    throw new Error('getOrdersByWhatsApp failed: ' + e.message);
+  }
+}

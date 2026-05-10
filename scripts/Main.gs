@@ -28,6 +28,8 @@ var ACTION_MAP = {
   getUsers:         function()     { return getUsers(); },
   // Auth
   checkAdminAuth:   function(p)    { return checkAdminAuth(p.username, p.password); },
+  // Order tracking
+  getOrdersByWhatsApp: function(p) { return getOrdersByWhatsApp(p.whatsapp); },
 };
 
 /**

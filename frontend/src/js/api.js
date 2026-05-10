@@ -43,6 +43,9 @@ export const updateOrderStatus       = (orderId, status) => gasRequest('updateOr
 // ── Users ──────────────────────────────────────────────────────────────────
 export const getUsers = () => gasRequest('getUsers');
 
+// ── Order tracking ─────────────────────────────────────────────────────────
+export const getOrdersByWhatsApp = (whatsapp) => gasRequest('getOrdersByWhatsApp', { whatsapp });
+
 // ── Auth ───────────────────────────────────────────────────────────────────
 export const checkAdminAuth = (username, password) =>
   gasRequest('checkAdminAuth', { username, password });

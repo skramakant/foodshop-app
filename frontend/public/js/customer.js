@@ -9,7 +9,6 @@ import {
   escapeHtml, formatPrice, setCurrency, buildWhatsAppMessage, buildWaMeUrl,
   validateOrderForm
 } from './utils.js';
-
 // ── State ──────────────────────────────────────────────────────────────────
 let cart = loadCart();
 let shopWhatsApp = '';
@@ -389,6 +388,64 @@ window.handleConfirmOrder = async () => {
   } catch (err) {
     showError(err);
     if (btn) { btn.disabled = false; btn.innerHTML = orderViaWhatsApp ? '📲 Confirm & WhatsApp' : 'Confirm Order'; }
+  }
+};
+
+// ── Track Order ────────────────────────────────────────────────────────────
+window.trackOrder = async () => {
+  const whatsapp = document.getElementById('track-whatsapp').value.trim();
+  if (!whatsapp) {
+    document.getElementById('track-whatsapp').classList.add('invalid');
+    return;
+  }
+  document.getElementById('track-whatsapp').classList.remove('invalid');
+  document.getElementById('track-loading').classList.remove('hidden');
+  document.getElementById('track-empty').classList.add('hidden');
+  document.getElementById('track-results').classList.add('hidden');
+
+  try {
+    const orders = await API.getOrdersByWhatsApp(whatsapp);
+    document.getElementById('track-loading').classList.add('hidden');
+
+    if (!orders || !orders.length) {
+      document.getElementById('track-empty').classList.remove('hidden');
+      return;
+    }
+
+    const statusLabels = { received: 'Received', payment_received: 'Payment Received', in_progress: 'In Progress', completed: 'Completed' };
+    const statusColors = { received: '#1d4ed8', payment_received: '#6d28d9', in_progress: '#c2410c', completed: '#15803d' };
+    const statusBg     = { received: '#dbeafe', payment_received: '#ede9fe', in_progress: '#ffedd5', completed: '#dcfce7' };
+
+    const resultsEl = document.getElementById('track-results');
+    resultsEl.innerHTML = orders.slice().reverse().map(order => {
+      let cartItems = [];
+      try { cartItems = typeof order.cart_details === 'string' ? JSON.parse(order.cart_details) : order.cart_details; } catch {}
+      const itemsHtml = Array.isArray(cartItems)
+        ? cartItems.map(ci => `<span class="text-xs text-slate-600">${escapeHtml(ci.name)} ×${ci.quantity}</span>`).join(' · ')
+        : '';
+      const statusLabel = statusLabels[order.status] || order.status;
+      const statusColor = statusColors[order.status] || '#475569';
+      const statusBgCol = statusBg[order.status] || '#f1f5f9';
+      const date = order.timestamp ? new Date(order.timestamp).toLocaleString() : '';
+
+      return `
+        <div class="card overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100" style="background:${statusBgCol}">
+            <span class="text-xs font-bold uppercase tracking-wide" style="color:${statusColor}">${statusLabel}</span>
+            <span class="text-xs text-slate-400">${date}</span>
+          </div>
+          <div class="px-4 py-3 flex flex-col gap-1.5">
+            <div class="font-bold text-teal-700">${formatPrice(order.total_price)}</div>
+            ${itemsHtml ? `<div class="text-sm text-slate-500">${itemsHtml}</div>` : ''}
+            <div class="text-xs text-slate-400">📍 ${escapeHtml(order.customer_address || '')}</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    resultsEl.classList.remove('hidden');
+  } catch (err) {
+    document.getElementById('track-loading').classList.add('hidden');
+    showError(err);
   }
 };
 

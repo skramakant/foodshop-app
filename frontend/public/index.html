@@ -213,7 +213,7 @@
           <span id="sidebar-cart-badge" class="nav-badge hidden">0</span>
         </button>
         <button class="sidebar-nav-item" id="sidebar-nav-orders" onclick="showSection('orders-section')">
-          <span class="nav-icon">📦</span> My Orders
+          <span class="nav-icon">🔍</span> Track Order
         </button>
       </nav>
     </aside>
@@ -271,14 +271,28 @@
         </div>
       </section>
 
-      <!-- ── Orders Section (placeholder) ── -->
-      <section id="orders-section" class="content-section px-4 pt-5 pb-10 max-w-5xl mx-auto w-full">
-        <h2 class="text-xl font-bold text-slate-800 mb-4">My Orders</h2>
-        <div class="card p-8 text-center text-slate-400">
-          <div class="text-4xl mb-3">📦</div>
-          <div class="font-semibold text-slate-600 mb-1">Coming Soon</div>
-          <div class="text-sm">Order history will be available here.</div>
+      <!-- ── Track Order Section ── -->
+      <section id="orders-section" class="content-section px-4 pt-5 pb-10 max-w-2xl mx-auto w-full">
+        <h2 class="text-xl font-bold text-slate-800 mb-1">Track Your Order</h2>
+        <p class="text-sm text-slate-400 mb-6">Enter the WhatsApp number you used when placing your order.</p>
+
+        <div class="card p-5 mb-5">
+          <div class="flex flex-col gap-3">
+            <div>
+              <label class="form-label" for="track-whatsapp">WhatsApp Number</label>
+              <input type="tel" id="track-whatsapp" class="form-input" placeholder="971501234567" />
+            </div>
+            <button onclick="trackOrder()" class="btn-primary w-full">🔍 Find My Orders</button>
+          </div>
         </div>
+
+        <div id="track-loading" class="hidden text-center py-8 text-slate-400">⏳ Looking up your orders…</div>
+        <div id="track-empty" class="hidden card p-8 text-center text-slate-400">
+          <div class="text-4xl mb-3">📦</div>
+          <div class="font-semibold text-slate-600 mb-1">No orders found</div>
+          <div class="text-sm">No orders found for this WhatsApp number.</div>
+        </div>
+        <div id="track-results" class="hidden flex flex-col gap-3"></div>
       </section>
 
     </div><!-- /.content-area -->
@@ -300,7 +314,7 @@
         <span id="bottom-cart-badge" data-count="0" class="bottom-nav-cart-badge hidden">0</span>
       </button>
       <button class="bottom-nav-item" id="bottom-nav-orders" onclick="showSection('orders-section')">
-        <span class="nav-icon">📦</span>Orders
+        <span class="nav-icon">🔍</span>Track
       </button>
     </div>
   </nav>
@@ -408,10 +422,19 @@
         </div>
 
         <!-- Step 3: Done -->
-        <div id="order-step-3" class="order-step hidden text-center py-10">
+        <div id="order-step-3" class="order-step hidden text-center py-8">
           <div class="text-6xl mb-4">✅</div>
           <div class="text-2xl font-extrabold text-green-700 mb-2">Order Placed!</div>
-          <div class="text-sm text-slate-500 leading-relaxed">Your order has been received.<br>The shop will contact you shortly.</div>
+          <div class="text-sm text-slate-500 leading-relaxed mb-5">Your order has been received.<br>The shop will contact you shortly.</div>
+          <div class="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-left">
+            <div class="flex items-start gap-2">
+              <span class="text-lg">📱</span>
+              <div>
+                <div class="text-sm font-semibold text-blue-800 mb-0.5">Track your order</div>
+                <div class="text-xs text-blue-600 leading-relaxed">Use your WhatsApp number to track your order status anytime from the <strong>Track Order</strong> section in the menu.</div>
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>
