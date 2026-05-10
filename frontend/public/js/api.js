@@ -7,11 +7,8 @@
  */
 
 // ── Configuration ─────────────────────────────────────────────────────────
-// Replace with your deployed GAS Web App URL
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbytgZyGldD54pLvvVIaKWSzh62LvfbsD7LsKJv5uTU6wPH59e4d_ZZPdy9DrCrXnKfW/exec';
-
-// API key — must match the API_KEY value in GAS Script Properties
-// Set this in Apps Script → Project Settings → Script Properties → API_KEY
+// Both values injected at deploy time via GitHub Secrets — never hardcoded here
+const GAS_API_URL = 'REPLACE_WITH_GAS_API_URL';
 const GAS_API_KEY = 'REPLACE_WITH_YOUR_API_KEY';
 
 // ── Core fetch helper ──────────────────────────────────────────────────────
