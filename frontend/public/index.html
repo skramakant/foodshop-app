@@ -387,7 +387,7 @@
           </div>
         </div>
 
-        <div class="text-center py-2 text-slate-400 text-xs">Powered by InstaShop 🛍️</div>
+        <div class="text-center py-2 text-slate-400 text-xs"></div>
 
       </section>
 
@@ -397,14 +397,19 @@
 
   <!-- ── Powered by InstaShop ── -->
   <div id="instashop-footer"
-       style="position:fixed; bottom:0; left:220px; right:0; background:#1e293b; z-index:39;
+       style="position:fixed; bottom:0; right:0; background:#1e293b; z-index:39;
               text-align:center; padding:6px 16px; font-size:12px; color:rgba(255,255,255,0.7);">
     Powered by <a onclick="showSection('about-section')"
       style="color:#2dd4bf; font-weight:700; cursor:pointer; text-decoration:none;">InstaShop</a> 🛍️
   </div>
   <style>
+    /* Desktop: footer sits next to sidebar */
+    @media (min-width: 768px) {
+      #instashop-footer { left: 220px; }
+    }
+    /* Mobile: footer sits above bottom nav */
     @media (max-width: 767px) {
-      #instashop-footer { left: 0 !important; bottom: 70px !important; }
+      #instashop-footer { left: 0; bottom: 70px; }
     }
   </style>
 
