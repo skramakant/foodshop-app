@@ -29,7 +29,7 @@ function clearSession() {
 function showPortal() {
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('admin-portal').classList.remove('hidden');
-  switchTab('shop');
+  switchTab('orders');
 }
 
 window.handleLogin = async () => {
