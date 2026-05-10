@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Food Shop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 min-h-screen">
+
+  <!-- ── Added to Cart Popup ── -->
+  <div id="cart-popup-overlay" class="hidden fixed inset-0 bg-black/25 z-[9998]"></div>
+  <div id="cart-popup"
+    class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-90
+           bg-white rounded-2xl shadow-2xl p-8 text-center z-[9999]
+           opacity-0 pointer-events-none transition-all duration-200 min-w-[260px] max-w-[80vw]">
+    <div class="text-5xl mb-3">🛒</div>
+    <div class="text-lg font-bold text-green-700 mb-1">Added to Cart!</div>
+    <div id="cart-popup-item-name" class="text-sm text-slate-500"></div>
+  </div>
+
+  <!-- ── Header ── -->
+  <header class="bg-slate-800 text-white px-5 py-4 flex items-center justify-between sticky top-0 z-50 shadow-lg">
+    <h1 id="shop-name" class="text-xl font-bold tracking-tight">Food Shop</h1>
+  </header>
+
+  <!-- ── Closed Banner ── -->
+  <div id="closed-banner" class="hidden bg-amber-50 border-b-2 border-amber-400 text-amber-800 px-4 py-3 text-center font-semibold text-sm">
+    🚫 Shop is currently closed. Orders are not being accepted at this time.
+  </div>
+
+  <!-- ── Shop Info Card ── -->
+  <div id="shop-info" class="hidden mx-4 mt-4">
+    <div class="card p-4 flex flex-col gap-2">
+      <div class="flex items-center justify-between flex-wrap gap-2">
+        <div id="shop-info-name" class="hidden text-base font-bold text-slate-800">
+          🍽 <span id="shop-info-name-val"></span>
+        </div>
+        <span id="shop-info-status-badge" class="badge"></span>
+      </div>
+      <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
+        <div id="shop-info-whatsapp" class="hidden items-center gap-1">📞 <span id="shop-info-whatsapp-val"></span></div>
+        <div id="shop-info-email"    class="hidden items-center gap-1">✉️ <span id="shop-info-email-val"></span></div>
+        <div id="shop-info-address"  class="hidden items-center gap-1">📍 <span id="shop-info-address-val"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Error Banner ── -->
+  <div id="error-banner" class="hidden mx-4 mt-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 flex items-start gap-3">
+    <span id="error-text" class="flex-1 text-sm"></span>
+    <button onclick="dismissError()" class="text-red-400 text-lg leading-none p-1 hover:text-red-600">✕</button>
+  </div>
+
+  <!-- ── Menu Section ── -->
+  <main id="menu-section" class="px-4 pt-5 pb-40 max-w-5xl mx-auto">
+    <div id="ptr-indicator" class="text-center text-slate-400 text-sm font-medium overflow-hidden max-h-0 transition-all duration-200">
+      ↻ Refreshing menu…
+    </div>
+    <h2 class="text-xl font-bold text-slate-800 mb-4">Menu</h2>
+    <div id="menu-grid" class="grid grid-cols-1 gap-4">
+      <!-- Skeleton cards -->
+      <div class="card overflow-hidden"><div class="skeleton h-48 w-full"></div><div class="p-4 flex flex-col gap-3"><div class="skeleton h-4 w-3/4"></div><div class="skeleton h-3 w-1/2"></div><div class="skeleton h-12 w-full rounded-xl mt-1"></div></div></div>
+      <div class="card overflow-hidden"><div class="skeleton h-48 w-full"></div><div class="p-4 flex flex-col gap-3"><div class="skeleton h-4 w-3/4"></div><div class="skeleton h-3 w-1/2"></div><div class="skeleton h-12 w-full rounded-xl mt-1"></div></div></div>
+      <div class="card overflow-hidden"><div class="skeleton h-48 w-full"></div><div class="p-4 flex flex-col gap-3"><div class="skeleton h-4 w-3/4"></div><div class="skeleton h-3 w-1/2"></div><div class="skeleton h-12 w-full rounded-xl mt-1"></div></div></div>
+    </div>
+  </main>
+
+  <!-- ── Cart Overlay ── -->
+  <div id="cart-overlay" onclick="closeCart()" class="hidden fixed inset-0 bg-black/45 z-[200]"></div>
+
+  <!-- ── Cart Panel ── -->
+  <aside id="cart-panel"
+    class="cart-panel fixed bg-white z-[201] flex flex-col rounded-2xl shadow-2xl"
+    role="complementary" aria-label="Shopping cart" aria-hidden="true">
+    <div class="flex items-center justify-between px-6 py-5 border-b border-slate-100 flex-shrink-0">
+      <h2 class="text-lg font-bold text-slate-800">Your Cart</h2>
+      <button onclick="closeCart()" class="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200">✕</button>
+    </div>
+    <div id="cart-items-list" class="flex-1 overflow-y-auto py-2 -webkit-overflow-scrolling-touch">
+      <div class="flex flex-col items-center justify-center py-12 gap-3 text-center px-6">
+        <div class="text-5xl">🛒</div>
+        <div class="font-bold text-slate-800">Your cart is empty</div>
+        <div class="text-sm text-slate-400">Add items from the menu to get started</div>
+      </div>
+    </div>
+    <div class="border-t-2 border-slate-100 px-6 py-4 flex-shrink-0">
+      <div class="flex justify-between items-center mb-3">
+        <span class="text-base font-semibold text-slate-500">Total</span>
+        <span id="cart-total" class="text-2xl font-extrabold text-slate-800">Rs 0.00</span>
+      </div>
+      <button id="place-order-wa-btn" onclick="openOrderModal(true)" disabled
+        class="btn-wa w-full text-base">
+        📲 Order via WhatsApp
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── Bottom Cart Bar ── -->
+  <div id="bottom-cart-bar"
+    class="fixed bottom-0 left-0 right-0 bg-slate-800 text-white z-[150]
+           rounded-t-3xl shadow-2xl flex flex-col gap-3 px-5 py-4"
+    style="padding-bottom: calc(1rem + env(safe-area-inset-bottom))">
+    <div class="flex items-center gap-4">
+      <div class="relative flex-shrink-0">
+        <button onclick="toggleCart()" class="w-14 h-14 bg-white/10 border border-white/20 rounded-full flex items-center justify-center text-3xl active:bg-white/20">🛒</button>
+        <span id="bottom-cart-badge" data-count="0"
+          class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs font-bold flex items-center justify-center border-2 border-slate-800">0</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <div id="bottom-cart-count" class="text-sm text-white/70">0 items</div>
+        <div id="bottom-cart-total" class="text-2xl font-extrabold">Rs 0.00</div>
+      </div>
+    </div>
+    <button id="bottom-order-wa-btn" onclick="openOrderModal(true)" disabled
+      class="btn-wa w-full text-base font-bold">
+      📲 Order via WhatsApp
+    </button>
+  </div>
+
+  <!-- ── Order Modal ── -->
+  <div id="order-modal-backdrop"
+    class="hidden fixed inset-0 bg-black/50 z-[300] flex items-center justify-center p-4"
+    role="dialog" aria-modal="true" aria-labelledby="order-modal-title" aria-hidden="true">
+    <div class="modal-enter bg-white w-full max-w-md rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 flex-shrink-0">
+        <h2 id="order-modal-title" class="text-lg font-bold text-slate-800">Place Order</h2>
+        <button onclick="closeOrderModal()" class="w-9 h-9 bg-slate-100 rounded-full flex items-center justify-center text-slate-500">✕</button>
+      </div>
+      <div class="overflow-y-auto flex-1 px-5 py-5 min-h-0">
+
+        <!-- Step 1: Details -->
+        <div id="order-step-1" class="order-step active">
+          <!-- Progress -->
+          <div class="mb-6">
+            <div class="flex items-center">
+              <div class="w-7 h-7 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">1</div>
+              <div class="flex-1 h-0.5 bg-slate-200 mx-1"></div>
+              <div class="w-7 h-7 rounded-full border-2 border-slate-200 text-slate-400 flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
+              <div class="flex-1 h-0.5 bg-slate-200 mx-1"></div>
+              <div class="w-7 h-7 rounded-full border-2 border-slate-200 text-slate-400 flex items-center justify-center text-xs font-bold flex-shrink-0">✓</div>
+            </div>
+            <div class="flex justify-between mt-1 px-0.5">
+              <span class="text-xs text-slate-400 font-medium">Details</span>
+              <span class="text-xs text-slate-400 font-medium">Review</span>
+              <span class="text-xs text-slate-400 font-medium">Done</span>
+            </div>
+          </div>
+          <div class="flex flex-col gap-4">
+            <div>
+              <label class="form-label" for="field-customer-name">Full Name <span class="text-red-400">*</span></label>
+              <input type="text" id="field-customer-name" class="form-input" placeholder="Your full name" autocomplete="name" />
+              <p id="err-customer-name" class="text-red-400 text-xs mt-1 min-h-[16px]"></p>
+            </div>
+            <div>
+              <label class="form-label" for="field-customer-whatsapp">WhatsApp Number <span class="text-red-400">*</span></label>
+              <input type="tel" id="field-customer-whatsapp" class="form-input" placeholder="971501234567" autocomplete="tel" />
+              <p id="err-customer-whatsapp" class="text-red-400 text-xs mt-1 min-h-[16px]"></p>
+            </div>
+            <div>
+              <label class="form-label" for="field-customer-address">Delivery Address <span class="text-red-400">*</span></label>
+              <textarea id="field-customer-address" class="form-input" rows="3" placeholder="Enter your full delivery address"></textarea>
+              <p id="err-customer-address" class="text-red-400 text-xs mt-1 min-h-[16px]"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Summary -->
+        <div id="order-step-2" class="order-step hidden">
+          <!-- Progress -->
+          <div class="mb-6">
+            <div class="flex items-center">
+              <div class="w-7 h-7 rounded-full bg-green-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">✓</div>
+              <div class="flex-1 h-0.5 bg-green-500 mx-1"></div>
+              <div class="w-7 h-7 rounded-full bg-slate-800 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
+              <div class="flex-1 h-0.5 bg-slate-200 mx-1"></div>
+              <div class="w-7 h-7 rounded-full border-2 border-slate-200 text-slate-400 flex items-center justify-center text-xs font-bold flex-shrink-0">✓</div>
+            </div>
+            <div class="flex justify-between mt-1 px-0.5">
+              <span class="text-xs text-slate-400 font-medium">Details</span>
+              <span class="text-xs text-slate-400 font-medium">Review</span>
+              <span class="text-xs text-slate-400 font-medium">Done</span>
+            </div>
+          </div>
+          <ul id="summary-items" class="divide-y divide-slate-100 mb-4"></ul>
+          <div class="flex justify-between items-center pt-3 border-t-2 border-slate-100">
+            <span class="text-base font-bold text-slate-800">Total</span>
+            <span id="summary-total" class="text-xl font-extrabold text-teal-700"></span>
+          </div>
+          <div id="summary-customer-details" class="mt-4 bg-slate-50 rounded-xl p-4 text-sm text-slate-600 flex flex-col gap-1"></div>
+        </div>
+
+        <!-- Step 3: Done -->
+        <div id="order-step-3" class="order-step hidden text-center py-10">
+          <div class="text-6xl mb-4">✅</div>
+          <div class="text-2xl font-extrabold text-green-700 mb-2">Order Placed!</div>
+          <div class="text-sm text-slate-500 leading-relaxed">Your order has been received.<br>The shop will contact you shortly.</div>
+        </div>
+
+      </div>
+      <div id="order-modal-footer" class="px-4 py-3 border-t border-slate-100 flex gap-2 flex-shrink-0 bg-white"></div>
+    </div>
+  </div>
+
+  <script type="module" src="js/customer.js"></script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Custom component classes ── */
+@layer components {
+  /* Card */
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-slate-100;
+  }
+
+  /* Primary button */
+  .btn-primary {
+    @apply bg-slate-800 text-white font-semibold rounded-xl px-5 py-3
+           min-h-[48px] flex items-center justify-center gap-2
+           active:opacity-80 disabled:opacity-40 disabled:cursor-not-allowed
+           transition-opacity cursor-pointer border-0;
+  }
+
+  /* WhatsApp button */
+  .btn-wa {
+    @apply bg-[#25d366] text-white font-semibold rounded-xl px-5 py-3
+           min-h-[48px] flex items-center justify-center gap-2
+           active:bg-[#1ebe5d] disabled:opacity-40 disabled:cursor-not-allowed
+           transition-colors cursor-pointer border-0;
+  }
+
+  /* Secondary button */
+  .btn-secondary {
+    @apply bg-slate-100 text-slate-600 font-semibold rounded-xl px-5 py-3
+           min-h-[48px] flex items-center justify-center gap-2
+           active:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed
+           transition-colors cursor-pointer border-0;
+  }
+
+  /* Form input */
+  .form-input {
+    @apply w-full border-2 border-slate-200 rounded-xl px-4 py-3
+           text-base text-slate-800 bg-white font-sans
+           focus:outline-none focus:border-slate-800 focus:ring-2 focus:ring-slate-800/10
+           transition-colors;
+  }
+
+  .form-input.invalid {
+    @apply border-red-400;
+  }
+
+  /* Form label */
+  .form-label {
+    @apply text-sm font-semibold text-slate-500 mb-1 block;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold;
+  }
+  .badge-open    { @apply bg-green-100 text-green-700; }
+  .badge-closed  { @apply bg-red-100 text-red-700; }
+  .badge-available     { @apply bg-green-100 text-green-700; }
+  .badge-not_available { @apply bg-slate-100 text-slate-500; }
+}
+
+/* ── Shimmer animation ── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 8px;
+}
+
+/* ── Spinner ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 20px; height: 20px;
+  border: 2.5px solid rgba(255,255,255,0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ── Cart panel modal ── */
+.cart-panel {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  width: calc(100% - 32px);
+  max-width: 480px;
+  max-height: 85vh;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s, transform 0.22s;
+}
+.cart-panel.open {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── Modal animation ── */
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.modal-enter { animation: modalIn 0.2s ease; }

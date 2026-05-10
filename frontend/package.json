@@ -1,0 +1,14 @@
+{
+  "name": "foodshop-frontend",
+  "version": "1.0.0",
+  "description": "Food Shop customer and admin portals — standalone frontend",
+  "scripts": {
+    "dev": "npx serve public -p 3000",
+    "build": "npx tailwindcss -i src/css/input.css -o public/css/app.css --minify",
+    "watch": "npx tailwindcss -i src/css/input.css -o public/css/app.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0",
+    "serve": "^14.2.0"
+  }
+}

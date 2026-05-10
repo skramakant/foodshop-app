@@ -1,21 +1,70 @@
-// Main.gs — HTTP entry point (doGet router)
+// Main.gs — HTTP entry point
 // ─────────────────────────────────────────────────────────────────────────────
-// This is the only file that handles incoming web requests.
-// All business logic lives in the *Service.gs files.
+// doGet  → serves the legacy GAS HTML portals (admin.html / customer.html)
+// doPost → JSON API for the new standalone frontend
 //
-// URL routing:
-//   ?page=admin    → serves admin.html  (requires login)
-//   ?page=customer → serves customer.html
-//   (no param)     → serves customer.html  (default)
-//
-// Depends on: (none — only uses HtmlService and ContentService)
+// The standalone frontend (frontend/) calls doPost with:
+//   { action: 'functionName', ...params }
+// and receives:
+//   { result: ... }  on success
+//   { error: '...' } on failure
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ── Allowed actions and their handler functions ───────────────────────────
+var ACTION_MAP = {
+  // Shop
+  getShopMetadata:  function()     { return getShopMetadata(); },
+  saveShopMetadata: function(p)    { return saveShopMetadata(p.data); },
+  // Food
+  getFoodItems:     function()     { return getFoodItems(); },
+  addFoodItem:      function(p)    { return addFoodItem(p.item); },
+  updateFoodItem:   function(p)    { return updateFoodItem(p.item); },
+  deleteFoodItem:   function(p)    { return deleteFoodItem(p.id); },
+  // Orders
+  placeOrder:              function(p) { return placeOrder(p.orderData); },
+  getOrdersWithTodayCounts:function()  { return getOrdersWithTodayCounts(); },
+  updateOrderStatus:       function(p) { return updateOrderStatus(p.orderId, p.status); },
+  // Users
+  getUsers:         function()     { return getUsers(); },
+  // Auth
+  checkAdminAuth:   function(p)    { return checkAdminAuth(p.username, p.password); },
+};
+
 /**
- * Routes incoming GET requests to the appropriate HTML portal.
- *
- * @param {Object} e - GAS event object (e.parameter contains query params)
- * @returns {HtmlOutput|TextOutput}
+ * JSON API handler for the standalone frontend.
+ * Accepts POST with body: { action: string, ...params }
+ * Returns: { result: any } or { error: string }
+ */
+function doPost(e) {
+  var headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+
+  try {
+    var body   = JSON.parse(e.postData.contents);
+    var action = body.action;
+
+    if (!action || !ACTION_MAP[action]) {
+      throw new Error('Unknown action: ' + action);
+    }
+
+    var result = ACTION_MAP[action](body);
+    return ContentService
+      .createTextOutput(JSON.stringify({ result: result }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ error: err.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+/**
+ * Routes GET requests to the legacy GAS HTML portals.
+ * Still used while the old html/ portals are in service.
  */
 function doGet(e) {
   try {
