@@ -72,12 +72,23 @@ window.dismissError = () => {
 // ── Tab switching ──────────────────────────────────────────────────────────
 let settingsLoaded = false, ordersLoaded = false, usersLoaded = false;
 
+const TAB_TITLES = { shop: 'Shop Settings', food: 'Food Items', orders: 'Orders', users: 'Customers' };
+
 window.switchTab = (tabId) => {
   ['shop', 'food', 'orders', 'users'].forEach(id => {
     document.getElementById(`tab-${id}`).classList.toggle('active', id === tabId);
     document.getElementById(`tab-${id}`).classList.toggle('hidden', id !== tabId);
-    document.getElementById(`tab-btn-${id}`).classList.toggle('active', id === tabId);
+    // Sidebar nav
+    const sideNav = document.getElementById(`nav-${id}`);
+    if (sideNav) sideNav.classList.toggle('active', id === tabId);
+    // Bottom nav
+    const bottomNav = document.getElementById(`bottom-nav-${id}`);
+    if (bottomNav) bottomNav.classList.toggle('active', id === tabId);
   });
+  // Update content header title
+  const titleEl = document.getElementById('content-title');
+  if (titleEl) titleEl.textContent = TAB_TITLES[tabId] || tabId;
+
   if (tabId === 'shop'   && !settingsLoaded) { loadSettings(); settingsLoaded = true; }
   if (tabId === 'food')                       { loadFoodItems(); }
   if (tabId === 'orders' && !ordersLoaded)   { loadOrders();   ordersLoaded = true; }

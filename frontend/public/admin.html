@@ -7,6 +7,177 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/app.css" />
+  <style>
+    /* ── Tab sections ── */
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+
+    /* Order card status badge */
+    .status-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .status-received         { background: #dbeafe; color: #1d4ed8; }
+    .status-payment_received { background: #ede9fe; color: #6d28d9; }
+    .status-in_progress      { background: #ffedd5; color: #c2410c; }
+    .status-completed        { background: #dcfce7; color: #15803d; }
+
+    /* ── App layout ── */
+    .app-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Left sidebar ── */
+    .sidebar {
+      width: 220px;
+      background: #1e293b;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      z-index: 40;
+      flex-shrink: 0;
+    }
+    .sidebar-logo {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .sidebar-logo h1 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+    .sidebar-logo p {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 2px;
+    }
+    .sidebar-nav {
+      flex: 1;
+      padding: 12px 0;
+      overflow-y: auto;
+    }
+    .sidebar-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.65);
+      cursor: pointer;
+      border-radius: 0;
+      transition: all 0.15s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    .sidebar-nav-item:hover {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+    }
+    .sidebar-nav-item.active {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      font-weight: 600;
+      border-right: 3px solid #25d366;
+    }
+    .sidebar-nav-item .nav-icon { font-size: 18px; }
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .sidebar-logout {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+      cursor: pointer;
+      background: none;
+      border: none;
+      width: 100%;
+      padding: 8px 0;
+    }
+    .sidebar-logout:hover { color: #fff; }
+
+    /* ── Content area ── */
+    .content-area {
+      margin-left: 220px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .content-header {
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+    .content-header h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    /* ── Bottom tab bar (mobile only) ── */
+    .bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #1e293b;
+      z-index: 40;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .bottom-nav-items {
+      display: flex;
+      align-items: stretch;
+    }
+    .bottom-nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 4px;
+      font-size: 10px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.55);
+      cursor: pointer;
+      background: none;
+      border: none;
+      gap: 3px;
+      transition: color 0.15s;
+    }
+    .bottom-nav-item .nav-icon { font-size: 20px; }
+    .bottom-nav-item.active { color: #25d366; }
+    .bottom-nav-item:hover { color: #fff; }
+
+    @media (max-width: 767px) {
+      .sidebar { display: none; }
+      .content-area { margin-left: 0; padding-bottom: 70px; }
+      .bottom-nav { display: block; }
+    }
+  </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 min-h-screen">
 
@@ -33,194 +204,197 @@
 
   <!-- ── Admin Portal ── -->
   <div id="admin-portal" class="hidden">
+    <div class="app-layout">
 
-    <!-- Header -->
-    <header class="bg-slate-800 text-white px-5 py-4 flex items-center justify-between sticky top-0 z-50 shadow-lg">
-      <h1 class="text-lg font-bold">Food Shop Admin</h1>
-      <button onclick="handleLogout()" class="text-sm bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 hover:bg-white/20">Sign Out</button>
-    </header>
-
-    <!-- Error Banner -->
-    <div id="error-banner" class="hidden mx-4 mt-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 flex items-start gap-3">
-      <span id="error-msg-text" class="flex-1 text-sm"></span>
-      <button onclick="dismissError()" class="text-red-400 text-lg">✕</button>
-    </div>
-
-    <!-- Tab Nav -->
-    <nav class="bg-white border-b border-slate-200 px-4 mt-4 flex overflow-x-auto scrollbar-hide" role="tablist">
-      <button id="tab-btn-shop"   onclick="switchTab('shop')"   class="tab-btn active" role="tab">🏪 Shop</button>
-      <button id="tab-btn-food"   onclick="switchTab('food')"   class="tab-btn" role="tab">🍽 Food</button>
-      <button id="tab-btn-orders" onclick="switchTab('orders')" class="tab-btn" role="tab">📋 Orders</button>
-      <button id="tab-btn-users"  onclick="switchTab('users')"  class="tab-btn" role="tab">👥 Users</button>
-    </nav>
-
-    <main class="p-4 max-w-5xl mx-auto pb-10">
-
-      <!-- Shop Tab -->
-      <section id="tab-shop" class="tab-section">
-        <div class="card p-5">
-          <h2 class="text-base font-bold mb-4">Shop Settings</h2>
-          <div id="shop-loading" class="text-center py-10 text-slate-400">⏳ Loading…</div>
-          <form id="settings-form" class="hidden flex flex-col gap-4" onsubmit="handleSettingsSubmit(event)">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div><label class="form-label">Shop Name</label><input type="text" id="s-shop-name" class="form-input" /><p class="text-red-400 text-xs mt-1" id="err-shop-name"></p></div>
-              <div><label class="form-label">WhatsApp Number</label><input type="text" id="s-whatsapp" class="form-input" placeholder="971501234567" /><p class="text-red-400 text-xs mt-1" id="err-whatsapp-number"></p></div>
-              <div><label class="form-label">Email</label><input type="text" id="s-email" class="form-input" /><p class="text-red-400 text-xs mt-1" id="err-email"></p></div>
-              <div><label class="form-label">Status</label>
-                <select id="s-status" class="form-input">
-                  <option value="open">Open</option>
-                  <option value="closed">Closed</option>
-                </select>
-              </div>
-              <div class="sm:col-span-2"><label class="form-label">Address</label><input type="text" id="s-address" class="form-input" /><p class="text-red-400 text-xs mt-1" id="err-address"></p></div>
-            </div>
-            <div class="flex gap-3 mt-2">
-              <button type="submit" class="btn-primary">Save Settings</button>
-            </div>
-            <p id="settings-success" class="hidden text-green-600 text-sm font-medium">✓ Settings saved.</p>
-          </form>
+      <!-- Left Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-logo">
+          <h1>🍽 Food Shop</h1>
+          <p>Admin Portal</p>
         </div>
-      </section>
+        <nav class="sidebar-nav">
+          <button class="sidebar-nav-item active" id="nav-shop" onclick="switchTab('shop')">
+            <span class="nav-icon">🏪</span> Shop
+          </button>
+          <button class="sidebar-nav-item" id="nav-food" onclick="switchTab('food')">
+            <span class="nav-icon">🍽</span> Food Items
+          </button>
+          <button class="sidebar-nav-item" id="nav-orders" onclick="switchTab('orders')">
+            <span class="nav-icon">📋</span> Orders
+          </button>
+          <button class="sidebar-nav-item" id="nav-users" onclick="switchTab('users')">
+            <span class="nav-icon">👥</span> Customers
+          </button>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="sidebar-logout" onclick="handleLogout()">
+            <span>🚪</span> Sign Out
+          </button>
+        </div>
+      </aside>
 
-      <!-- Food Tab -->
-      <section id="tab-food" class="tab-section hidden">
-        <div class="card p-5">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-base font-bold">Food Items</h2>
-            <button onclick="showAddForm()" class="btn-primary text-sm px-4 py-2 min-h-0">+ Add Item</button>
-          </div>
+      <!-- Content Area -->
+      <div class="content-area">
 
-          <!-- Add/Edit Form -->
-          <div id="item-form-wrap" class="hidden mb-5">
-            <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
-              <h3 id="item-form-title" class="font-bold mb-4">Add Food Item</h3>
-              <form id="item-form" onsubmit="handleItemFormSubmit(event)" class="flex flex-col gap-3">
-                <input type="hidden" id="f-item-id" />
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div><label class="form-label">Name</label><input type="text" id="f-name" class="form-input" placeholder="Chicken Burger" /><p class="text-red-400 text-xs mt-1" id="err-f-name"></p></div>
-                  <div><label class="form-label">Price</label><input type="number" id="f-price" class="form-input" placeholder="5.00" min="0.01" step="0.01" /><p class="text-red-400 text-xs mt-1" id="err-f-price"></p></div>
-                  <div class="sm:col-span-2"><label class="form-label">Description</label><textarea id="f-description" class="form-input" rows="2" placeholder="Short description"></textarea><p class="text-red-400 text-xs mt-1" id="err-f-description"></p></div>
-                  <div><label class="form-label">Image URL</label><input type="text" id="f-image" class="form-input" placeholder="https://..." /><p class="text-red-400 text-xs mt-1" id="err-f-image"></p></div>
-                  <div><label class="form-label">Availability</label>
-                    <select id="f-availability" class="form-input">
-                      <option value="available">Available</option>
-                      <option value="not_available">Not Available</option>
+        <!-- Content Header -->
+        <header class="content-header">
+          <h2 id="content-title">Shop Settings</h2>
+        </header>
+
+        <!-- Error Banner -->
+        <div id="error-banner" class="hidden mx-4 mt-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 flex items-start gap-3">
+          <span id="error-msg-text" class="flex-1 text-sm"></span>
+          <button onclick="dismissError()" class="text-red-400 text-lg">✕</button>
+        </div>
+
+        <!-- Tab Sections -->
+        <main class="p-4 max-w-5xl mx-auto pb-10 w-full">
+
+          <!-- Shop Tab -->
+          <section id="tab-shop" class="tab-section active">
+            <div class="card p-5">
+              <h2 class="text-base font-bold mb-4">Shop Settings</h2>
+              <div id="shop-loading" class="text-center py-10 text-slate-400">⏳ Loading…</div>
+              <form id="settings-form" class="hidden flex flex-col gap-4" onsubmit="handleSettingsSubmit(event)">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div><label class="form-label">Shop Name</label><input type="text" id="s-shop-name" class="form-input" /><p class="text-red-400 text-xs mt-1" id="err-shop-name"></p></div>
+                  <div><label class="form-label">WhatsApp Number</label><input type="text" id="s-whatsapp" class="form-input" placeholder="971501234567" /><p class="text-red-400 text-xs mt-1" id="err-whatsapp-number"></p></div>
+                  <div><label class="form-label">Email</label><input type="text" id="s-email" class="form-input" /><p class="text-red-400 text-xs mt-1" id="err-email"></p></div>
+                  <div><label class="form-label">Status</label>
+                    <select id="s-status" class="form-input">
+                      <option value="open">Open</option>
+                      <option value="closed">Closed</option>
                     </select>
                   </div>
+                  <div class="sm:col-span-2"><label class="form-label">Address</label><input type="text" id="s-address" class="form-input" /><p class="text-red-400 text-xs mt-1" id="err-address"></p></div>
                 </div>
-                <div class="flex gap-2 mt-1">
-                  <button type="submit" class="btn-primary text-sm">Save Item</button>
-                  <button type="button" onclick="cancelItemForm()" class="btn-secondary text-sm">Cancel</button>
+                <div class="flex gap-3 mt-2">
+                  <button type="submit" class="btn-primary">Save Settings</button>
                 </div>
+                <p id="settings-success" class="hidden text-green-600 text-sm font-medium">✓ Settings saved.</p>
               </form>
             </div>
-          </div>
+          </section>
 
-          <div id="food-loading" class="text-center py-10 text-slate-400">⏳ Loading…</div>
-          <div id="food-list" class="hidden flex flex-col gap-3"></div>
-          <div id="food-empty" class="hidden text-center py-10 text-slate-400">🍴 No food items yet.</div>
-        </div>
-      </section>
+          <!-- Food Tab -->
+          <section id="tab-food" class="tab-section hidden">
+            <div class="card p-5">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="text-base font-bold">Food Items</h2>
+                <button onclick="showAddForm()" class="btn-primary text-sm px-4 py-2 min-h-0">+ Add Item</button>
+              </div>
 
-      <!-- Orders Tab -->
-      <section id="tab-orders" class="tab-section hidden">
-        <!-- New order notification banner -->
-        <div id="new-order-banner" class="hidden mx-0 mb-4 bg-green-50 border border-green-200 text-green-800 rounded-2xl px-4 py-3 flex items-center gap-3">
-          <span class="text-2xl">🔔</span>
-          <span id="new-order-text" class="flex-1 font-semibold text-sm"></span>
-          <button onclick="document.getElementById('new-order-banner').classList.add('hidden')" class="text-green-500 text-lg font-bold">✕</button>
-        </div>
-        <div id="orders-loading" class="card p-5 text-center text-slate-400">⏳ Loading orders…</div>
-        <div id="orders-content" class="hidden flex flex-col gap-4">
+              <!-- Add/Edit Form -->
+              <div id="item-form-wrap" class="hidden mb-5">
+                <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                  <h3 id="item-form-title" class="font-bold mb-4">Add Food Item</h3>
+                  <form id="item-form" onsubmit="handleItemFormSubmit(event)" class="flex flex-col gap-3">
+                    <input type="hidden" id="f-item-id" />
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div><label class="form-label">Name</label><input type="text" id="f-name" class="form-input" placeholder="Chicken Burger" /><p class="text-red-400 text-xs mt-1" id="err-f-name"></p></div>
+                      <div><label class="form-label">Price</label><input type="number" id="f-price" class="form-input" placeholder="5.00" min="0.01" step="0.01" /><p class="text-red-400 text-xs mt-1" id="err-f-price"></p></div>
+                      <div class="sm:col-span-2"><label class="form-label">Description</label><textarea id="f-description" class="form-input" rows="2" placeholder="Short description"></textarea><p class="text-red-400 text-xs mt-1" id="err-f-description"></p></div>
+                      <div><label class="form-label">Image URL</label><input type="text" id="f-image" class="form-input" placeholder="https://..." /><p class="text-red-400 text-xs mt-1" id="err-f-image"></p></div>
+                      <div><label class="form-label">Availability</label>
+                        <select id="f-availability" class="form-input">
+                          <option value="available">Available</option>
+                          <option value="not_available">Not Available</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="flex gap-2 mt-1">
+                      <button type="submit" class="btn-primary text-sm">Save Item</button>
+                      <button type="button" onclick="cancelItemForm()" class="btn-secondary text-sm">Cancel</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
 
-          <!-- Total Stats Panel -->
-          <div class="card p-4">
-            <div class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">All Time</div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div class="text-center"><div class="text-xs font-semibold text-slate-400 mb-1">Received</div><div id="count-received" class="text-3xl font-extrabold text-blue-600">0</div></div>
-              <div class="text-center"><div class="text-xs font-semibold text-slate-400 mb-1">Payment</div><div id="count-payment_received" class="text-3xl font-extrabold text-purple-600">0</div></div>
-              <div class="text-center"><div class="text-xs font-semibold text-slate-400 mb-1">In Progress</div><div id="count-in_progress" class="text-3xl font-extrabold text-orange-600">0</div></div>
-              <div class="text-center"><div class="text-xs font-semibold text-slate-400 mb-1">Completed</div><div id="count-completed" class="text-3xl font-extrabold text-green-600">0</div></div>
+              <div id="food-loading" class="text-center py-10 text-slate-400">⏳ Loading…</div>
+              <div id="food-list" class="hidden flex flex-col gap-3"></div>
+              <div id="food-empty" class="hidden text-center py-10 text-slate-400">🍴 No food items yet.</div>
             </div>
-          </div>
+          </section>
 
-          <!-- Today's Stats Panel -->
-          <div class="card p-4">
-            <div class="flex items-center justify-between mb-3">
-              <div class="text-xs font-bold text-slate-400 uppercase tracking-wide">Today</div>
-              <div id="today-date" class="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg"></div>
+          <!-- Orders Tab -->
+          <section id="tab-orders" class="tab-section hidden">
+            <!-- New order notification banner -->
+            <div id="new-order-banner" class="hidden mx-0 mb-4 bg-green-50 border border-green-200 text-green-800 rounded-2xl px-4 py-3 flex items-center gap-3">
+              <span class="text-2xl">🔔</span>
+              <span id="new-order-text" class="flex-1 font-semibold text-sm"></span>
+              <button onclick="document.getElementById('new-order-banner').classList.add('hidden')" class="text-green-500 text-lg font-bold">✕</button>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div class="text-center"><div class="text-xs font-semibold text-slate-400 mb-1">Received</div><div id="today-count-received" class="text-3xl font-extrabold text-blue-600">0</div></div>
-              <div class="text-center"><div class="text-xs font-semibold text-slate-400 mb-1">Payment</div><div id="today-count-payment_received" class="text-3xl font-extrabold text-purple-600">0</div></div>
-              <div class="text-center"><div class="text-xs font-semibold text-slate-400 mb-1">In Progress</div><div id="today-count-in_progress" class="text-3xl font-extrabold text-orange-600">0</div></div>
-              <div class="text-center"><div class="text-xs font-semibold text-slate-400 mb-1">Completed</div><div id="today-count-completed" class="text-3xl font-extrabold text-green-600">0</div></div>
+            <div id="orders-loading" class="card p-5 text-center text-slate-400">⏳ Loading orders…</div>
+            <div id="orders-content" class="hidden flex flex-col gap-4">
+
+              <!-- Total Stats Panel -->
+              <div class="card p-4">
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">All Time</div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div class="text-center"><div class="text-xs font-semibold text-slate-400 mb-1">Received</div><div id="count-received" class="text-3xl font-extrabold text-blue-600">0</div></div>
+                  <div class="text-center"><div class="text-xs font-semibold text-slate-400 mb-1">Payment</div><div id="count-payment_received" class="text-3xl font-extrabold text-purple-600">0</div></div>
+                  <div class="text-center"><div class="text-xs font-semibold text-slate-400 mb-1">In Progress</div><div id="count-in_progress" class="text-3xl font-extrabold text-orange-600">0</div></div>
+                  <div class="text-center"><div class="text-xs font-semibold text-slate-400 mb-1">Completed</div><div id="count-completed" class="text-3xl font-extrabold text-green-600">0</div></div>
+                </div>
+              </div>
+
+              <!-- Today's Stats Panel -->
+              <div class="card p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="text-xs font-bold text-slate-400 uppercase tracking-wide">Today</div>
+                  <div id="today-date" class="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg"></div>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div class="text-center"><div class="text-xs font-semibold text-slate-400 mb-1">Received</div><div id="today-count-received" class="text-3xl font-extrabold text-blue-600">0</div></div>
+                  <div class="text-center"><div class="text-xs font-semibold text-slate-400 mb-1">Payment</div><div id="today-count-payment_received" class="text-3xl font-extrabold text-purple-600">0</div></div>
+                  <div class="text-center"><div class="text-xs font-semibold text-slate-400 mb-1">In Progress</div><div id="today-count-in_progress" class="text-3xl font-extrabold text-orange-600">0</div></div>
+                  <div class="text-center"><div class="text-xs font-semibold text-slate-400 mb-1">Completed</div><div id="today-count-completed" class="text-3xl font-extrabold text-green-600">0</div></div>
+                </div>
+              </div>
+
+              <!-- All Orders List -->
+              <div class="card p-5">
+                <h2 class="text-base font-bold mb-4">All Orders</h2>
+                <div id="orders-empty" class="hidden text-center py-10 text-slate-400">📋 No orders yet.</div>
+                <div id="orders-list" class="flex flex-col gap-3"></div>
+              </div>
             </div>
-          </div>
+          </section>
 
-          <!-- All Orders List -->
-          <div class="card p-5">
-            <h2 class="text-base font-bold mb-4">All Orders</h2>
-            <div id="orders-empty" class="hidden text-center py-10 text-slate-400">📋 No orders yet.</div>
-            <div id="orders-list" class="flex flex-col gap-3"></div>
-          </div>
-        </div>
-      </section>
+          <!-- Users Tab -->
+          <section id="tab-users" class="tab-section hidden">
+            <div class="card p-5">
+              <h2 class="text-base font-bold mb-4">Customers</h2>
+              <div id="users-loading" class="text-center py-10 text-slate-400">⏳ Loading…</div>
+              <div id="users-list" class="hidden flex flex-col gap-3"></div>
+              <div id="users-empty" class="hidden text-center py-10 text-slate-400">👥 No customers yet.</div>
+            </div>
+          </section>
 
-      <!-- Users Tab -->
-      <section id="tab-users" class="tab-section hidden">
-        <div class="card p-5">
-          <h2 class="text-base font-bold mb-4">Customers</h2>
-          <div id="users-loading" class="text-center py-10 text-slate-400">⏳ Loading…</div>
-          <div id="users-list" class="hidden flex flex-col gap-3"></div>
-          <div id="users-empty" class="hidden text-center py-10 text-slate-400">👥 No customers yet.</div>
-        </div>
-      </section>
+        </main>
+      </div><!-- /.content-area -->
 
-    </main>
-  </div>
+    </div><!-- /.app-layout -->
 
-  <style>
-    .tab-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 12px 16px;
-      font-size: 14px;
-      font-weight: 500;
-      color: #64748b;
-      border-bottom: 2px solid transparent;
-      white-space: nowrap;
-      flex-shrink: 0;
-      cursor: pointer;
-      background: transparent;
-      border-top: none;
-      border-left: none;
-      border-right: none;
-      transition: color 0.15s;
-    }
-    .tab-btn:hover { color: #1e293b; }
-    .tab-btn.active { color: #1e293b; border-bottom-color: #1e293b; font-weight: 600; }
-    .tab-section { display: none; }
-    .tab-section.active { display: block; }
-    nav::-webkit-scrollbar { display: none; }
-    nav { -ms-overflow-style: none; scrollbar-width: none; }
+    <!-- Bottom Nav (mobile) -->
+    <nav class="bottom-nav">
+      <div class="bottom-nav-items">
+        <button class="bottom-nav-item active" id="bottom-nav-shop" onclick="switchTab('shop')">
+          <span class="nav-icon">🏪</span>Shop
+        </button>
+        <button class="bottom-nav-item" id="bottom-nav-food" onclick="switchTab('food')">
+          <span class="nav-icon">🍽</span>Food
+        </button>
+        <button class="bottom-nav-item" id="bottom-nav-orders" onclick="switchTab('orders')">
+          <span class="nav-icon">📋</span>Orders
+        </button>
+        <button class="bottom-nav-item" id="bottom-nav-users" onclick="switchTab('users')">
+          <span class="nav-icon">👥</span>Users
+        </button>
+      </div>
+    </nav>
 
-    /* Order card status badge */
-    .status-badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-    }
-    .status-received        { background: #dbeafe; color: #1d4ed8; }
-    .status-payment_received{ background: #ede9fe; color: #6d28d9; }
-    .status-in_progress     { background: #ffedd5; color: #c2410c; }
-    .status-completed       { background: #dcfce7; color: #15803d; }
-  </style>
+  </div><!-- /#admin-portal -->
 
   <script type="module" src="js/admin.js"></script>
 </body>

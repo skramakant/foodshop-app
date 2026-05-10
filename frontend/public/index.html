@@ -7,6 +7,177 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/app.css" />
+  <style>
+    /* ── App layout ── */
+    .app-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Left sidebar ── */
+    .sidebar {
+      width: 220px;
+      background: #1e293b;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 100vh;
+      z-index: 40;
+      flex-shrink: 0;
+    }
+    .sidebar-logo {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .sidebar-logo h1 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+    .sidebar-logo p {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 2px;
+    }
+    .sidebar-nav {
+      flex: 1;
+      padding: 12px 0;
+      overflow-y: auto;
+    }
+    .sidebar-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.65);
+      cursor: pointer;
+      border-radius: 0;
+      transition: all 0.15s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    .sidebar-nav-item:hover {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+    }
+    .sidebar-nav-item.active {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      font-weight: 600;
+      border-right: 3px solid #25d366;
+    }
+    .sidebar-nav-item .nav-icon { font-size: 18px; }
+    .sidebar-nav-item .nav-badge {
+      margin-left: auto;
+      background: #25d366;
+      color: #fff;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      min-width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5px;
+    }
+
+    /* ── Content area ── */
+    .content-area {
+      margin-left: 220px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .content-header {
+      background: #1e293b;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+    }
+    .content-header h1 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+
+    /* ── Content sections ── */
+    .content-section { display: none; }
+    .content-section.active { display: block; }
+
+    /* ── Bottom tab bar (mobile only) ── */
+    .bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #1e293b;
+      z-index: 40;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .bottom-nav-items {
+      display: flex;
+      align-items: stretch;
+    }
+    .bottom-nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 4px;
+      font-size: 10px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.55);
+      cursor: pointer;
+      background: none;
+      border: none;
+      gap: 3px;
+      transition: color 0.15s;
+      position: relative;
+    }
+    .bottom-nav-item .nav-icon { font-size: 20px; }
+    .bottom-nav-item.active { color: #25d366; }
+    .bottom-nav-item:hover { color: #fff; }
+    .bottom-nav-cart-badge {
+      position: absolute;
+      top: 6px;
+      right: calc(50% - 18px);
+      background: #ef4444;
+      color: #fff;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      min-width: 16px;
+      height: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 3px;
+      border: 2px solid #1e293b;
+    }
+
+    @media (max-width: 767px) {
+      .sidebar { display: none; }
+      .content-area { margin-left: 0; padding-bottom: 70px; }
+      .bottom-nav { display: block; }
+    }
+  </style>
 </head>
 <body class="bg-slate-50 font-sans text-slate-800 min-h-screen">
 
@@ -21,52 +192,118 @@
     <div id="cart-popup-item-name" class="text-sm text-slate-500"></div>
   </div>
 
-  <!-- ── Header ── -->
-  <header class="bg-slate-800 text-white px-5 py-4 flex items-center justify-between sticky top-0 z-50 shadow-lg">
-    <h1 id="shop-name" class="text-xl font-bold tracking-tight">Food Shop</h1>
-  </header>
+  <!-- ── App Layout ── -->
+  <div class="app-layout">
 
-  <!-- ── Closed Banner ── -->
-  <div id="closed-banner" class="hidden bg-amber-50 border-b-2 border-amber-400 text-amber-800 px-4 py-3 text-center font-semibold text-sm">
-    🚫 Shop is currently closed. Orders are not being accepted at this time.
-  </div>
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <h1 id="sidebar-shop-name">🍽 Food Shop</h1>
+        <p>Order Online</p>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="sidebar-nav-item" id="sidebar-nav-shop-info" onclick="showSection('shop-info-section')">
+          <span class="nav-icon">🏪</span> Shop Info
+        </button>
+        <button class="sidebar-nav-item active" id="sidebar-nav-menu" onclick="showSection('menu-section')">
+          <span class="nav-icon">🍽</span> Menu
+        </button>
+        <button class="sidebar-nav-item" id="sidebar-nav-cart" onclick="toggleCart()">
+          <span class="nav-icon">🛒</span> Cart
+          <span id="sidebar-cart-badge" class="nav-badge hidden">0</span>
+        </button>
+        <button class="sidebar-nav-item" id="sidebar-nav-orders" onclick="showSection('orders-section')">
+          <span class="nav-icon">📦</span> My Orders
+        </button>
+      </nav>
+    </aside>
 
-  <!-- ── Shop Info Card ── -->
-  <div id="shop-info" class="hidden mx-4 mt-4">
-    <div class="card p-4 flex flex-col gap-2">
-      <div class="flex items-center justify-between flex-wrap gap-2">
-        <div id="shop-info-name" class="hidden text-base font-bold text-slate-800">
-          🍽 <span id="shop-info-name-val"></span>
+    <!-- Content Area -->
+    <div class="content-area">
+
+      <!-- Content Header -->
+      <header class="content-header">
+        <h1 id="shop-name">Food Shop</h1>
+      </header>
+
+      <!-- Closed Banner -->
+      <div id="closed-banner" class="hidden bg-amber-50 border-b-2 border-amber-400 text-amber-800 px-4 py-3 text-center font-semibold text-sm">
+        🚫 Shop is currently closed. Orders are not being accepted at this time.
+      </div>
+
+      <!-- Error Banner -->
+      <div id="error-banner" class="hidden mx-4 mt-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 flex items-start gap-3">
+        <span id="error-text" class="flex-1 text-sm"></span>
+        <button onclick="dismissError()" class="text-red-400 text-lg leading-none p-1 hover:text-red-600">✕</button>
+      </div>
+
+      <!-- ── Shop Info Section ── -->
+      <section id="shop-info-section" class="content-section px-4 pt-5 pb-10 max-w-5xl mx-auto w-full">
+        <h2 class="text-xl font-bold text-slate-800 mb-4">Shop Info</h2>
+        <div id="shop-info" class="hidden">
+          <div class="card p-4 flex flex-col gap-2">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div id="shop-info-name" class="hidden text-base font-bold text-slate-800">
+                🍽 <span id="shop-info-name-val"></span>
+              </div>
+              <span id="shop-info-status-badge" class="badge"></span>
+            </div>
+            <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
+              <div id="shop-info-whatsapp" class="hidden items-center gap-1">📞 <span id="shop-info-whatsapp-val"></span></div>
+              <div id="shop-info-email"    class="hidden items-center gap-1">✉️ <span id="shop-info-email-val"></span></div>
+              <div id="shop-info-address"  class="hidden items-center gap-1">📍 <span id="shop-info-address-val"></span></div>
+            </div>
+          </div>
         </div>
-        <span id="shop-info-status-badge" class="badge"></span>
-      </div>
-      <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
-        <div id="shop-info-whatsapp" class="hidden items-center gap-1">📞 <span id="shop-info-whatsapp-val"></span></div>
-        <div id="shop-info-email"    class="hidden items-center gap-1">✉️ <span id="shop-info-email-val"></span></div>
-        <div id="shop-info-address"  class="hidden items-center gap-1">📍 <span id="shop-info-address-val"></span></div>
-      </div>
-    </div>
-  </div>
+      </section>
 
-  <!-- ── Error Banner ── -->
-  <div id="error-banner" class="hidden mx-4 mt-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 flex items-start gap-3">
-    <span id="error-text" class="flex-1 text-sm"></span>
-    <button onclick="dismissError()" class="text-red-400 text-lg leading-none p-1 hover:text-red-600">✕</button>
-  </div>
+      <!-- ── Menu Section ── -->
+      <section id="menu-section" class="content-section active px-4 pt-5 pb-10 max-w-5xl mx-auto w-full">
+        <div id="ptr-indicator" class="text-center text-slate-400 text-sm font-medium overflow-hidden max-h-0 transition-all duration-200">
+          ↻ Refreshing menu…
+        </div>
+        <h2 class="text-xl font-bold text-slate-800 mb-4">Menu</h2>
+        <div id="menu-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Skeleton cards -->
+          <div class="card overflow-hidden"><div class="skeleton h-48 w-full"></div><div class="p-4 flex flex-col gap-3"><div class="skeleton h-4 w-3/4"></div><div class="skeleton h-3 w-1/2"></div><div class="skeleton h-12 w-full rounded-xl mt-1"></div></div></div>
+          <div class="card overflow-hidden"><div class="skeleton h-48 w-full"></div><div class="p-4 flex flex-col gap-3"><div class="skeleton h-4 w-3/4"></div><div class="skeleton h-3 w-1/2"></div><div class="skeleton h-12 w-full rounded-xl mt-1"></div></div></div>
+          <div class="card overflow-hidden"><div class="skeleton h-48 w-full"></div><div class="p-4 flex flex-col gap-3"><div class="skeleton h-4 w-3/4"></div><div class="skeleton h-3 w-1/2"></div><div class="skeleton h-12 w-full rounded-xl mt-1"></div></div></div>
+        </div>
+      </section>
 
-  <!-- ── Menu Section ── -->
-  <main id="menu-section" class="px-4 pt-5 pb-40 max-w-5xl mx-auto">
-    <div id="ptr-indicator" class="text-center text-slate-400 text-sm font-medium overflow-hidden max-h-0 transition-all duration-200">
-      ↻ Refreshing menu…
+      <!-- ── Orders Section (placeholder) ── -->
+      <section id="orders-section" class="content-section px-4 pt-5 pb-10 max-w-5xl mx-auto w-full">
+        <h2 class="text-xl font-bold text-slate-800 mb-4">My Orders</h2>
+        <div class="card p-8 text-center text-slate-400">
+          <div class="text-4xl mb-3">📦</div>
+          <div class="font-semibold text-slate-600 mb-1">Coming Soon</div>
+          <div class="text-sm">Order history will be available here.</div>
+        </div>
+      </section>
+
+    </div><!-- /.content-area -->
+
+  </div><!-- /.app-layout -->
+
+  <!-- ── Bottom Nav (mobile) ── -->
+  <nav class="bottom-nav">
+    <div class="bottom-nav-items">
+      <button class="bottom-nav-item" id="bottom-nav-shop-info" onclick="showSection('shop-info-section')">
+        <span class="nav-icon">🏪</span>Shop
+      </button>
+      <button class="bottom-nav-item active" id="bottom-nav-menu" onclick="showSection('menu-section')">
+        <span class="nav-icon">🍽</span>Menu
+      </button>
+      <button class="bottom-nav-item" id="bottom-nav-cart" onclick="toggleCart()">
+        <span class="nav-icon">🛒</span>
+        <span id="bottom-nav-cart-count" class="text-xs"></span>Cart
+        <span id="bottom-cart-badge" data-count="0" class="bottom-nav-cart-badge hidden">0</span>
+      </button>
+      <button class="bottom-nav-item" id="bottom-nav-orders" onclick="showSection('orders-section')">
+        <span class="nav-icon">📦</span>Orders
+      </button>
     </div>
-    <h2 class="text-xl font-bold text-slate-800 mb-4">Menu</h2>
-    <div id="menu-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <!-- Skeleton cards -->
-      <div class="card overflow-hidden"><div class="skeleton h-48 w-full"></div><div class="p-4 flex flex-col gap-3"><div class="skeleton h-4 w-3/4"></div><div class="skeleton h-3 w-1/2"></div><div class="skeleton h-12 w-full rounded-xl mt-1"></div></div></div>
-      <div class="card overflow-hidden"><div class="skeleton h-48 w-full"></div><div class="p-4 flex flex-col gap-3"><div class="skeleton h-4 w-3/4"></div><div class="skeleton h-3 w-1/2"></div><div class="skeleton h-12 w-full rounded-xl mt-1"></div></div></div>
-      <div class="card overflow-hidden"><div class="skeleton h-48 w-full"></div><div class="p-4 flex flex-col gap-3"><div class="skeleton h-4 w-3/4"></div><div class="skeleton h-3 w-1/2"></div><div class="skeleton h-12 w-full rounded-xl mt-1"></div></div></div>
-    </div>
-  </main>
+  </nav>
 
   <!-- ── Cart Overlay ── -->
   <div id="cart-overlay" onclick="closeCart()" class="hidden fixed inset-0 bg-black/45 z-[200]"></div>
@@ -97,28 +334,6 @@
       </button>
     </div>
   </aside>
-
-  <!-- ── Bottom Cart Bar ── -->
-  <div id="bottom-cart-bar"
-    class="fixed bottom-0 left-0 right-0 bg-slate-800 text-white z-[150]
-           rounded-t-3xl shadow-2xl flex flex-col gap-3 px-5 py-4"
-    style="padding-bottom: calc(1rem + env(safe-area-inset-bottom))">
-    <div class="flex items-center gap-4">
-      <div class="relative flex-shrink-0">
-        <button onclick="toggleCart()" class="w-14 h-14 bg-white/10 border border-white/20 rounded-full flex items-center justify-center text-3xl active:bg-white/20">🛒</button>
-        <span id="bottom-cart-badge" data-count="0"
-          class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs font-bold flex items-center justify-center border-2 border-slate-800">0</span>
-      </div>
-      <div class="flex-1 min-w-0">
-        <div id="bottom-cart-count" class="text-sm text-white/70">0 items</div>
-        <div id="bottom-cart-total" class="text-2xl font-extrabold">Rs 0.00</div>
-      </div>
-    </div>
-    <button id="bottom-order-wa-btn" onclick="openOrderModal(true)" disabled
-      class="btn-wa w-full text-base font-bold">
-      📲 Order via WhatsApp
-    </button>
-  </div>
 
   <!-- ── Order Modal ── -->
   <div id="order-modal-backdrop"

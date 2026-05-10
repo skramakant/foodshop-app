@@ -17,6 +17,27 @@ let shopClosed = false;
 let orderViaWhatsApp = false;
 let pendingCustomer = { name: '', whatsapp: '', address: '' };
 
+// ── Section switching ──────────────────────────────────────────────────────
+const SECTION_NAV_MAP = {
+  'shop-info-section': { sidebar: 'sidebar-nav-shop-info', bottom: 'bottom-nav-shop-info' },
+  'menu-section':      { sidebar: 'sidebar-nav-menu',      bottom: 'bottom-nav-menu' },
+  'orders-section':    { sidebar: 'sidebar-nav-orders',    bottom: 'bottom-nav-orders' },
+};
+
+window.showSection = (sectionId) => {
+  ['shop-info-section', 'menu-section', 'orders-section'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', id === sectionId);
+  });
+  Object.entries(SECTION_NAV_MAP).forEach(([id, ids]) => {
+    const isActive = id === sectionId;
+    const sideEl = document.getElementById(ids.sidebar);
+    const botEl  = document.getElementById(ids.bottom);
+    if (sideEl) sideEl.classList.toggle('active', isActive);
+    if (botEl)  botEl.classList.toggle('active', isActive);
+  });
+};
+
 // ── Init ───────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   renderCart();
@@ -46,6 +67,9 @@ function onMetadataLoaded(data) {
   if (data.shop_name) {
     document.getElementById('shop-name').textContent = data.shop_name;
     document.title = `${data.shop_name} — Order Online`;
+    // Update sidebar logo name
+    const sidebarName = document.getElementById('sidebar-shop-name');
+    if (sidebarName) sidebarName.textContent = `🍽 ${data.shop_name}`;
   }
   shopWhatsApp = data.whatsapp_number || '';
   if (data.currency_symbol) setCurrency(data.currency_symbol);
@@ -169,13 +193,20 @@ function renderCart() {
   const total = calcTotal(cart);
   const count = cart.reduce((s, i) => s + i.quantity, 0);
 
-  // Bottom bar
-  document.getElementById('bottom-cart-count').textContent = `${count} ${count === 1 ? 'item' : 'items'}`;
-  document.getElementById('bottom-cart-total').textContent = formatPrice(total);
+  // Bottom nav cart badge
   const bbadge = document.getElementById('bottom-cart-badge');
-  bbadge.textContent = count;
-  bbadge.dataset.count = count;
-  bbadge.classList.toggle('hidden', count === 0);
+  if (bbadge) {
+    bbadge.textContent = count;
+    bbadge.dataset.count = count;
+    bbadge.classList.toggle('hidden', count === 0);
+  }
+
+  // Sidebar cart badge
+  const sidebarBadge = document.getElementById('sidebar-cart-badge');
+  if (sidebarBadge) {
+    sidebarBadge.textContent = count;
+    sidebarBadge.classList.toggle('hidden', count === 0);
+  }
 
   // Cart total
   document.getElementById('cart-total').textContent = formatPrice(total);
@@ -213,7 +244,7 @@ function renderCart() {
 }
 
 function setOrderButtonsDisabled(disabled) {
-  ['place-order-wa-btn', 'bottom-order-wa-btn'].forEach(id => {
+  ['place-order-wa-btn'].forEach(id => {
     const btn = document.getElementById(id);
     if (btn) btn.disabled = disabled;
   });
