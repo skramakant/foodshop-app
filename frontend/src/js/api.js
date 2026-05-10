@@ -21,7 +21,8 @@ async function gasRequest(action, payload = {}) {
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   if (data.error) throw new Error(data.error);
-  return data;
+  // Unwrap result so callers get the data directly
+  return data.result !== undefined ? data.result : data;
 }
 
 // ── Shop ───────────────────────────────────────────────────────────────────
