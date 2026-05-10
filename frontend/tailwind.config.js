@@ -1,6 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ['./public/**/*.html', './src/**/*.js'],
+  safelist: [
+    { pattern: /^grid-cols-/ },
+    { pattern: /^grid-cols-/, variants: ['sm', 'md', 'lg'] },
+    { pattern: /^col-span-/ },
+  ],
   theme: {
     extend: {
       colors: {
