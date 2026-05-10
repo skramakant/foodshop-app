@@ -12,7 +12,7 @@ const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzGu9zuiShUBc5FPjUg
 
 // API key — must match the API_KEY value in GAS Script Properties
 // Set this in Apps Script → Project Settings → Script Properties → API_KEY
-const GAS_API_KEY = 'REPLACE_WITH_YOUR_API_KEY';
+const GAS_API_KEY = '8a5b014f50cb35fb3d60aa89aeb3d6283adbed7a22317574ca038e28212b341f';
 
 // ── Core fetch helper ──────────────────────────────────────────────────────
 async function gasRequest(action, payload = {}) {
