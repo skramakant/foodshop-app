@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Food Shop — Admin Portal</title>
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; color: #1a1a1a; background: #f5f5f5; min-height: 100vh; }
+
+/* ===== LOGIN SCREEN ===== */
+#login-screen {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh; background: #f5f5f5;
+}
+.login-card {
+  background: #fff; border-radius: 12px; padding: 40px 36px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.1); width: 100%; max-width: 360px;
+}
+.login-card h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; color: #1a1a1a; }
+.login-card p { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+.login-field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 16px; }
+.login-field label { font-size: 13px; font-weight: 600; color: #374151; }
+.login-field input {
+  border: 1.5px solid #d1d5db; border-radius: 8px; padding: 11px 13px;
+  font-size: 15px; color: #1a1a1a; width: 100%; transition: border-color 0.15s;
+}
+.login-field input:focus { outline: none; border-color: #1a1a1a; }
+.login-error { font-size: 13px; color: #dc2626; margin-bottom: 12px; min-height: 18px; }
+.login-btn {
+  width: 100%; background: #1a1a1a; color: #fff; border: none;
+  border-radius: 8px; padding: 13px; font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: opacity 0.15s; margin-top: 4px;
+}
+.login-btn:hover { opacity: 0.85; }
+.login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ===== PORTAL (hidden until logged in) ===== */
+#admin-portal { display: none; }
+
+/* ===== HEADER ===== */
+header { background: #1a1a1a; color: #fff; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+header h1 { font-size: 20px; font-weight: 600; letter-spacing: 0.3px; }
+.logout-btn { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); color: #fff; border-radius: 6px; padding: 6px 14px; font-size: 13px; cursor: pointer; }
+.logout-btn:hover { background: rgba(255,255,255,0.22); }
+
+/* ===== ERROR BANNER ===== */
+#error-banner { display: none; background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; padding: 12px 16px; margin: 16px 24px 0; border-radius: 6px; display: none; align-items: center; gap: 10px; }
+#error-banner.visible { display: flex; }
+#error-banner .error-msg { flex: 1; }
+#error-banner button { background: none; border: none; cursor: pointer; color: #991b1b; font-size: 18px; line-height: 1; padding: 0 4px; }
+
+/* ===== TAB NAV ===== */
+.tab-nav { display: flex; gap: 0; background: #fff; border-bottom: 2px solid #e5e5e5; padding: 0 16px; margin-top: 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.tab-nav::-webkit-scrollbar { display: none; }
+.tab-btn { background: none; border: none; border-bottom: 3px solid transparent; padding: 12px 16px; font-size: 14px; font-weight: 500; color: #6b7280; cursor: pointer; margin-bottom: -2px; transition: color 0.15s, border-color 0.15s; white-space: nowrap; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.tab-btn:hover { color: #1a1a1a; }
+.tab-btn.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
+.tab-icon { font-size: 16px; }
+
+/* ===== MAIN CONTENT ===== */
+main { padding: 24px; max-width: 1200px; }
+section.tab-section { display: none; }
+section.tab-section.active { display: block; }
+
+/* ===== CARDS ===== */
+.card { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 24px; margin-bottom: 20px; }
+.card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1a1a1a; }
+
+/* ===== FORMS ===== */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group.full-width { grid-column: 1 / -1; }
+label { font-size: 13px; font-weight: 500; color: #374151; }
+input[type="text"], input[type="number"], input[type="email"], input[type="url"], select, textarea {
+  border: 1px solid #d1d5db; border-radius: 6px; padding: 8px 10px; font-size: 14px; color: #1a1a1a;
+  background: #fff; width: 100%; transition: border-color 0.15s;
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: #1a1a1a; }
+input.error, select.error, textarea.error { border-color: #ef4444; }
+.field-error { font-size: 12px; color: #ef4444; margin-top: 2px; }
+textarea { resize: vertical; min-height: 72px; }
+
+/* ===== BUTTONS ===== */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: opacity 0.15s; }
+.btn:hover { opacity: 0.85; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary { background: #1a1a1a; color: #fff; }
+.btn-success { background: #16a34a; color: #fff; }
+.btn-danger { background: #dc2626; color: #fff; }
+.btn-warning { background: #d97706; color: #fff; }
+.btn-secondary { background: #6b7280; color: #fff; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+/* ===== TOOLBAR ===== */
+.toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.toolbar h2 { font-size: 16px; font-weight: 600; }
+
+/* ===== TABLES ===== */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table { width: 100%; border-collapse: collapse; min-width: 500px; }
+thead tr { background: #f9fafb; }
+th { text-align: left; padding: 10px 12px; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e5e5e5; white-space: nowrap; }
+td { padding: 10px 12px; border-bottom: 1px solid #f3f4f6; vertical-align: top; font-size: 13px; }
+tbody tr:hover { background: #f9fafb; }
+tbody tr:last-child td { border-bottom: none; }
+.td-truncate { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.td-img img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #e5e5e5; }
+.order-id-code { font-family: monospace; font-size: 11px; background: #f3f4f6; padding: 2px 5px; border-radius: 4px; word-break: break-all; display: block; max-width: 120px; }
+.cart-detail-list { list-style: none; padding: 0; margin: 0; }
+.cart-detail-list li { font-size: 12px; color: #374151; padding: 1px 0; white-space: nowrap; }
+
+/* ===== ORDERS CARD VIEW (mobile) ===== */
+.order-cards { display: none; }
+.order-card {
+  background: #fff; border: 1px solid #e5e5e5; border-radius: 8px;
+  padding: 14px; margin-bottom: 12px;
+}
+.order-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 8px; }
+.order-card-id { font-family: monospace; font-size: 11px; color: #6b7280; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; word-break: break-all; flex: 1; }
+.order-card-row { display: flex; gap: 6px; margin-bottom: 6px; font-size: 13px; }
+.order-card-label { font-weight: 600; color: #6b7280; min-width: 70px; flex-shrink: 0; }
+.order-card-value { color: #1a1a1a; flex: 1; word-break: break-word; }
+.order-card-items { background: #f9fafb; border-radius: 6px; padding: 8px 10px; margin: 8px 0; }
+.order-card-items li { font-size: 12px; color: #374151; padding: 2px 0; }
+
+@media (max-width: 700px) {
+  .orders-table-wrap { display: none; }
+  .order-cards { display: block; }
+}
+
+/* ===== STATUS BADGES ===== */
+.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.badge-received { background: #dbeafe; color: #1d4ed8; }
+.badge-payment_received { background: #ede9fe; color: #6d28d9; }
+.badge-in_progress { background: #ffedd5; color: #c2410c; }
+.badge-completed { background: #dcfce7; color: #15803d; }
+.badge-available { background: #dcfce7; color: #15803d; }
+.badge-not_available { background: #f3f4f6; color: #6b7280; }
+.badge-open { background: #dcfce7; color: #15803d; }
+.badge-closed { background: #fee2e2; color: #dc2626; }
+
+/* ===== STAT CARDS (Today's Counts) ===== */
+.stat-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 16px; text-align: center; }
+.stat-card .stat-label { font-size: 11px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.stat-card .stat-value { font-size: 28px; font-weight: 700; color: #1a1a1a; }
+.stat-card.stat-received .stat-value { color: #1d4ed8; }
+.stat-card.stat-payment_received .stat-value { color: #6d28d9; }
+.stat-card.stat-in_progress .stat-value { color: #c2410c; }
+.stat-card.stat-completed .stat-value { color: #15803d; }
+
+/* ===== ORDER COUNT BADGE ===== */
+.count-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; background: #f3f4f6; color: #374151; }
+.count-badge.repeat { background: #fef3c7; color: #92400e; }
+
+/* ===== INLINE FORM (Food) ===== */
+#item-form-wrap { display: none; margin-bottom: 20px; }
+#item-form-wrap.visible { display: block; }
+.form-actions { display: flex; gap: 8px; margin-top: 16px; }
+
+/* ===== SUCCESS MESSAGE ===== */
+.success-msg { display: none; background: #f0fdf4; border: 1px solid #86efac; color: #15803d; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-top: 12px; }
+.success-msg.visible { display: block; }
+
+/* ===== LOADING / EMPTY STATES ===== */
+.state-msg { text-align: center; padding: 40px 20px; color: #9ca3af; font-size: 14px; }
+.state-msg .icon { font-size: 32px; margin-bottom: 8px; }
+
+/* ===== STATUS SELECT (inline in table) ===== */
+.status-select { border: 1px solid #d1d5db; border-radius: 4px; padding: 4px 6px; font-size: 12px; background: #fff; cursor: pointer; }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .stat-bar { grid-template-columns: repeat(2, 1fr); }
+  main { padding: 16px; }
+  .tab-btn { padding: 10px 12px; font-size: 13px; }
+}
+@media (max-width: 480px) {
+  .stat-bar { grid-template-columns: 1fr 1fr; }
+  header h1 { font-size: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Login Screen ── -->
+<div id="login-screen">
+  <div class="login-card">
+    <h1>🍽 Admin Portal</h1>
+    <p>Sign in to manage your food shop</p>
+    <div class="login-field">
+      <label for="login-username">Username</label>
+      <input type="text" id="login-username" placeholder="Enter username" autocomplete="username" />
+    </div>
+    <div class="login-field">
+      <label for="login-password">Password</label>
+      <input type="password" id="login-password" placeholder="Enter password" autocomplete="current-password" />
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <button class="login-btn" id="login-btn" onclick="handleLogin()">Sign In</button>
+  </div>
+</div>
+
+<!-- ── Admin Portal (shown after login) ── -->
+<div id="admin-portal">
+
+<header>
+  <h1>Food Shop — Admin Portal</h1>
+  <button class="logout-btn" onclick="handleLogout()">Sign Out</button>
+</header>
+
+<!-- Error Banner -->
+<div id="error-banner" role="alert">
+  <span class="error-msg" id="error-msg-text"></span>
+  <button onclick="dismissError()" aria-label="Dismiss error">&#x2715;</button>
+</div>
+
+<!-- Tab Navigation -->
+<nav class="tab-nav" role="tablist">
+  <button class="tab-btn active" id="tab-btn-shop"   onclick="switchTab('shop')"   role="tab" aria-selected="true"  aria-controls="tab-shop"><span class="tab-icon">🏪</span> Shop</button>
+  <button class="tab-btn"        id="tab-btn-food"   onclick="switchTab('food')"   role="tab" aria-selected="false" aria-controls="tab-food"><span class="tab-icon">🍽</span> Food</button>
+  <button class="tab-btn"        id="tab-btn-orders" onclick="switchTab('orders')" role="tab" aria-selected="false" aria-controls="tab-orders"><span class="tab-icon">📋</span> Orders</button>
+  <button class="tab-btn"        id="tab-btn-users"  onclick="switchTab('users')"  role="tab" aria-selected="false" aria-controls="tab-users"><span class="tab-icon">👥</span> Users</button>
+</nav>
+
+<main>
+
+  <!-- ===== TAB: SHOP ===== -->
+  <section id="tab-shop" class="tab-section active" role="tabpanel" aria-labelledby="tab-btn-shop">
+    <div class="card">
+      <div class="card-title">Shop Settings</div>
+      <div id="shop-loading" class="state-msg"><div class="icon">&#x23F3;</div>Loading settings…</div>
+      <form id="settings-form" onsubmit="handleSettingsSubmit(event)" style="display:none;">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="s-shop-name">Shop Name</label>
+            <input type="text" id="s-shop-name" name="shop_name" placeholder="My Food Shop" />
+            <span class="field-error" id="err-shop-name"></span>
+          </div>
+          <div class="form-group">
+            <label for="s-whatsapp">WhatsApp Number</label>
+            <input type="text" id="s-whatsapp" name="whatsapp_number" placeholder="971501234567" />
+            <span class="field-error" id="err-whatsapp-number"></span>
+          </div>
+          <div class="form-group">
+            <label for="s-email">Email</label>
+            <input type="text" id="s-email" name="email" placeholder="shop@example.com" />
+            <span class="field-error" id="err-email"></span>
+          </div>
+          <div class="form-group">
+            <label for="s-status">Shop Status</label>
+            <select id="s-status" name="status">
+              <option value="open">Open</option>
+              <option value="closed">Closed</option>
+            </select>
+            <span class="field-error" id="err-status"></span>
+          </div>
+          <div class="form-group full-width">
+            <label for="s-address">Address</label>
+            <input type="text" id="s-address" name="address" placeholder="123 Main Street, City" />
+            <span class="field-error" id="err-address"></span>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+        </div>
+        <div class="success-msg" id="settings-success">Settings saved successfully.</div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ===== TAB: FOOD ===== -->
+  <section id="tab-food" class="tab-section" role="tabpanel" aria-labelledby="tab-btn-food">
+    <div class="card">
+      <div class="toolbar">
+        <h2>Food Items</h2>
+        <button class="btn btn-primary btn-sm" onclick="showAddForm()">+ Add Item</button>
+      </div>
+
+      <!-- Inline Add/Edit Form -->
+      <div id="item-form-wrap">
+        <div class="card" style="background:#f9fafb; border-color:#e5e5e5;">
+          <div class="card-title" id="item-form-title">Add Food Item</div>
+          <form id="item-form" onsubmit="handleItemFormSubmit(event)">
+            <input type="hidden" id="f-item-id" />
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="f-name">Name</label>
+                <input type="text" id="f-name" placeholder="Chicken Burger" />
+                <span class="field-error" id="err-f-name"></span>
+              </div>
+              <div class="form-group">
+                <label for="f-price">Price</label>
+                <input type="number" id="f-price" placeholder="5.00" min="0.01" step="0.01" />
+                <span class="field-error" id="err-f-price"></span>
+              </div>
+              <div class="form-group full-width">
+                <label for="f-description">Description</label>
+                <textarea id="f-description" placeholder="A juicy chicken burger with lettuce and tomato"></textarea>
+                <span class="field-error" id="err-f-description"></span>
+              </div>
+              <div class="form-group">
+                <label for="f-image">Image URL</label>
+                <input type="text" id="f-image" placeholder="https://example.com/image.jpg" />
+                <span class="field-error" id="err-f-image"></span>
+              </div>
+              <div class="form-group">
+                <label for="f-availability">Availability</label>
+                <select id="f-availability">
+                  <option value="available">Available</option>
+                  <option value="not_available">Not Available</option>
+                </select>
+                <span class="field-error" id="err-f-availability"></span>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-success">Save Item</button>
+              <button type="button" class="btn btn-secondary" onclick="cancelItemForm()">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Food Items Table -->
+      <div id="food-loading" class="state-msg"><div class="icon">&#x23F3;</div>Loading food items…</div>
+      <div id="food-table-wrap" style="display:none;">
+        <div id="food-empty" class="state-msg" style="display:none;"><div class="icon">&#x1F374;</div>No food items yet. Add your first item above.</div>
+        <div class="table-wrap" id="food-table-container">
+          <table id="food-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>Image</th>
+                <th>Availability</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="food-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TAB: ORDERS ===== -->
+  <section id="tab-orders" class="tab-section" role="tabpanel" aria-labelledby="tab-btn-orders">
+    <div id="orders-loading" class="state-msg card"><div class="icon">&#x23F3;</div>Loading orders…</div>
+    <div id="orders-content" style="display:none;">
+      <!-- Today's Counts -->
+      <div class="stat-bar" id="stat-bar">
+        <div class="stat-card stat-received">
+          <div class="stat-label">Received</div>
+          <div class="stat-value" id="count-received">0</div>
+        </div>
+        <div class="stat-card stat-payment_received">
+          <div class="stat-label">Payment Received</div>
+          <div class="stat-value" id="count-payment_received">0</div>
+        </div>
+        <div class="stat-card stat-in_progress">
+          <div class="stat-label">In Progress</div>
+          <div class="stat-value" id="count-in_progress">0</div>
+        </div>
+        <div class="stat-card stat-completed">
+          <div class="stat-label">Completed</div>
+          <div class="stat-value" id="count-completed">0</div>
+        </div>
+      </div>
+
+      <!-- Orders Table -->
+      <div class="card">
+        <div class="card-title">All Orders</div>
+        <div id="orders-empty" class="state-msg" style="display:none;"><div class="icon">&#x1F4CB;</div>No orders yet.</div>
+        <!-- Desktop table -->
+        <div class="table-wrap orders-table-wrap" id="orders-table-container">
+          <table id="orders-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>WhatsApp</th>
+                <th>Address</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody id="orders-tbody"></tbody>
+          </table>
+        </div>
+        <!-- Mobile cards -->
+        <div class="order-cards" id="orders-cards"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TAB: USERS ===== -->
+  <section id="tab-users" class="tab-section" role="tabpanel" aria-labelledby="tab-btn-users">
+    <div class="card">
+      <div class="card-title">Users</div>
+      <div id="users-loading" class="state-msg"><div class="icon">&#x23F3;</div>Loading users…</div>
+      <div id="users-table-wrap" style="display:none;">
+        <div id="users-empty" class="state-msg" style="display:none;"><div class="icon">&#x1F465;</div>No users yet.</div>
+        <div class="table-wrap" id="users-table-container">
+          <table id="users-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>WhatsApp Number</th>
+                <th>Address</th>
+                <th>Order Count</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+</div><!-- /#admin-portal -->
+
+<script>
+// ===== INLINED VALIDATION (from lib/validation.js) =====
+
+var VALID_AVAILABILITY = ['available', 'not_available'];
+
+function validateFoodItem(item) {
+  var errors = {};
+  if (!item || typeof item.name !== 'string' || item.name.trim() === '') {
+    errors.name = 'Name is required';
+  }
+  if (!item || typeof item.description !== 'string' || item.description.trim() === '') {
+    errors.description = 'Description is required';
+  }
+  if (!item || typeof item.image !== 'string' || item.image.trim() === '') {
+    errors.image = 'Image is required';
+  }
+  if (!item || typeof item.price !== 'number' || isNaN(item.price) || item.price <= 0) {
+    errors.price = 'Price must be a positive number';
+  }
+  if (!item || VALID_AVAILABILITY.indexOf(item.availability) === -1) {
+    errors.availability = 'Availability must be available or not_available';
+  }
+  return { valid: Object.keys(errors).length === 0, errors: errors };
+}
+
+function validateWhatsAppNumber(value) {
+  if (typeof value !== 'string') {
+    return { valid: false, error: 'WhatsApp number must be a string' };
+  }
+  var stripped = value.startsWith('+') ? value.slice(1) : value;
+  if (stripped.length === 0) {
+    return { valid: false, error: 'WhatsApp number is required' };
+  }
+  if (!/^\d+$/.test(stripped)) {
+    return { valid: false, error: 'WhatsApp number must contain digits only' };
+  }
+  return { valid: true, error: '' };
+}
+
+function validateShopSettings(params) {
+  params = params || {};
+  var shop_name = params.shop_name;
+  var whatsapp_number = params.whatsapp_number;
+  var email = params.email;
+  var address = params.address;
+  var status = params.status;
+  var errors = {};
+
+  if (typeof shop_name !== 'string' || shop_name.trim() === '') {
+    errors.shop_name = 'Shop name is required';
+  }
+  var waResult = validateWhatsAppNumber(whatsapp_number);
+  if (!waResult.valid) {
+    errors.whatsapp_number = waResult.error;
+  }
+  if (typeof email !== 'string' || email.trim() === '') {
+    errors.email = 'Email is required';
+  }
+  if (typeof address !== 'string' || address.trim() === '') {
+    errors.address = 'Address is required';
+  }
+  if (status !== 'open' && status !== 'closed') {
+    errors.status = 'Status must be open or closed';
+  }
+  return { valid: Object.keys(errors).length === 0, errors: errors };
+}
+
+// ===== TAB STATE =====
+var settingsLoaded = false;
+var ordersLoaded = false;
+var usersLoaded = false;
+
+// ===== TAB SWITCHING =====
+function switchTab(tabId) {
+  var tabs = ['shop', 'food', 'orders', 'users'];
+  tabs.forEach(function(id) {
+    var section = document.getElementById('tab-' + id);
+    var btn = document.getElementById('tab-btn-' + id);
+    if (id === tabId) {
+      section.classList.add('active');
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+    } else {
+      section.classList.remove('active');
+      btn.classList.remove('active');
+      btn.setAttribute('aria-selected', 'false');
+    }
+  });
+
+  if (tabId === 'shop' && !settingsLoaded) {
+    loadSettings();
+    settingsLoaded = true;
+  }
+  if (tabId === 'orders' && !ordersLoaded) {
+    loadOrders();
+    ordersLoaded = true;
+  }
+  if (tabId === 'users' && !usersLoaded) {
+    loadUsers();
+    usersLoaded = true;
+  }
+}
+
+// ===== ERROR BANNER =====
+function showError(err) {
+  var banner = document.getElementById('error-banner');
+  var msg = document.getElementById('error-msg-text');
+  var text = (err && err.message) ? err.message : (typeof err === 'string' ? err : 'Something went wrong, please try again.');
+  msg.textContent = text;
+  banner.classList.add('visible');
+}
+
+function dismissError() {
+  var banner = document.getElementById('error-banner');
+  banner.classList.remove('visible');
+}
+
+// ===== UTILITY =====
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeAttr(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+var adminCurrencySymbol = 'Rs';
+
+function formatPrice(num) {
+  var n = parseFloat(num);
+  if (isNaN(n)) return adminCurrencySymbol + ' 0.00';
+  return adminCurrencySymbol + ' ' + n.toFixed(2);
+}
+
+function formatTimestamp(ts) {
+  if (!ts) return '';
+  try {
+    var d = new Date(ts);
+    if (isNaN(d.getTime())) return String(ts);
+    return d.toLocaleString();
+  } catch (e) {
+    return String(ts);
+  }
+}
+
+// ===== SHOP TAB =====
+function loadSettings() {
+  document.getElementById('shop-loading').style.display = 'block';
+  document.getElementById('settings-form').style.display = 'none';
+  google.script.run
+    .withSuccessHandler(populateSettings)
+    .withFailureHandler(function(err) {
+      document.getElementById('shop-loading').style.display = 'none';
+      showError(err);
+    })
+    .getShopMetadata();
+}
+
+function populateSettings(data) {
+  document.getElementById('shop-loading').style.display = 'none';
+  document.getElementById('settings-form').style.display = 'block';
+  if (!data) return;
+  document.getElementById('s-shop-name').value = data.shop_name || '';
+  document.getElementById('s-whatsapp').value = data.whatsapp_number || '';
+  document.getElementById('s-email').value = data.email || '';
+  document.getElementById('s-address').value = data.address || '';
+  document.getElementById('s-status').value = data.status || 'open';
+  if (data.currency_symbol) adminCurrencySymbol = data.currency_symbol;
+}
+
+function handleSettingsSubmit(event) {
+  event.preventDefault();
+  // Clear previous errors
+  ['shop_name', 'whatsapp_number', 'email', 'address', 'status'].forEach(function(f) {
+    var el = document.getElementById('err-' + f.replace('_', '-'));
+    if (el) { el.textContent = ''; }
+  });
+  document.getElementById('err-shop-name').textContent = '';
+  document.getElementById('err-whatsapp-number').textContent = '';
+  document.getElementById('err-email').textContent = '';
+  document.getElementById('err-address').textContent = '';
+  document.getElementById('err-status').textContent = '';
+  document.getElementById('settings-success').classList.remove('visible');
+
+  var data = {
+    shop_name: document.getElementById('s-shop-name').value,
+    whatsapp_number: document.getElementById('s-whatsapp').value,
+    email: document.getElementById('s-email').value,
+    address: document.getElementById('s-address').value,
+    status: document.getElementById('s-status').value
+  };
+
+  var result = validateShopSettings(data);
+  if (!result.valid) {
+    var fieldMap = {
+      shop_name: 'err-shop-name',
+      whatsapp_number: 'err-whatsapp-number',
+      email: 'err-email',
+      address: 'err-address',
+      status: 'err-status'
+    };
+    Object.keys(result.errors).forEach(function(field) {
+      var el = document.getElementById(fieldMap[field]);
+      if (el) el.textContent = result.errors[field];
+    });
+    return;
+  }
+
+  var btn = event.target.querySelector('button[type="submit"]');
+  if (btn) btn.disabled = true;
+
+  google.script.run
+    .withSuccessHandler(function() {
+      if (btn) btn.disabled = false;
+      document.getElementById('settings-success').classList.add('visible');
+    })
+    .withFailureHandler(function(err) {
+      if (btn) btn.disabled = false;
+      showError(err);
+    })
+    .saveShopMetadata(data);
+}
+
+// ===== FOOD TAB =====
+var _editingItemId = null;
+
+function loadFoodItems() {
+  document.getElementById('food-loading').style.display = 'block';
+  document.getElementById('food-table-wrap').style.display = 'none';
+  google.script.run
+    .withSuccessHandler(renderFoodItems)
+    .withFailureHandler(function(err) {
+      document.getElementById('food-loading').style.display = 'none';
+      showError(err);
+    })
+    .getFoodItems();
+}
+
+function renderFoodItems(items) {
+  document.getElementById('food-loading').style.display = 'none';
+  document.getElementById('food-table-wrap').style.display = 'block';
+
+  if (!items || items.length === 0) {
+    document.getElementById('food-empty').style.display = 'block';
+    document.getElementById('food-table-container').style.display = 'none';
+    return;
+  }
+  document.getElementById('food-empty').style.display = 'none';
+  document.getElementById('food-table-container').style.display = 'block';
+
+  var tbody = document.getElementById('food-tbody');
+  tbody.innerHTML = '';
+  items.forEach(function(item) {
+    var tr = document.createElement('tr');
+    var availBadge = item.availability === 'available'
+      ? '<span class="badge badge-available">Available</span>'
+      : '<span class="badge badge-not_available">Not Available</span>';
+    var imgHtml = item.image
+      ? '<div class="td-img"><img src="' + escapeAttr(item.image) + '" alt="' + escapeAttr(item.name) + '" onerror="this.style.display=\'none\'" /></div>'
+      : '<span style="color:#9ca3af;">No image</span>';
+    tr.innerHTML =
+      '<td class="td-truncate" title="' + escapeAttr(item.name) + '">' + escapeHtml(item.name) + '</td>' +
+      '<td class="td-truncate" title="' + escapeAttr(item.description) + '">' + escapeHtml(item.description) + '</td>' +
+      '<td>' + formatPrice(item.price) + '</td>' +
+      '<td>' + imgHtml + '</td>' +
+      '<td>' + availBadge + '</td>' +
+      '<td style="white-space:nowrap;">' +
+        '<button class="btn btn-warning btn-sm" onclick="showEditForm(' + escapeAttr(JSON.stringify(item)) + ')">Edit</button> ' +
+        '<button class="btn btn-danger btn-sm" onclick="deleteItem(\'' + escapeAttr(item.id) + '\')">Delete</button>' +
+      '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function showAddForm() {
+  _editingItemId = null;
+  resetItemForm();
+  document.getElementById('item-form-title').textContent = 'Add Food Item';
+  document.getElementById('item-form-wrap').classList.add('visible');
+  document.getElementById('f-name').focus();
+}
+
+function showEditForm(item) {
+  if (typeof item === 'string') {
+    try { item = JSON.parse(item); } catch(e) { return; }
+  }
+  _editingItemId = item.id;
+  resetItemForm();
+  document.getElementById('item-form-title').textContent = 'Edit Food Item';
+  document.getElementById('f-item-id').value = item.id || '';
+  document.getElementById('f-name').value = item.name || '';
+  document.getElementById('f-description').value = item.description || '';
+  document.getElementById('f-price').value = item.price != null ? item.price : '';
+  document.getElementById('f-image').value = item.image || '';
+  document.getElementById('f-availability').value = item.availability || 'available';
+  document.getElementById('item-form-wrap').classList.add('visible');
+  document.getElementById('f-name').focus();
+}
+
+function cancelItemForm() {
+  document.getElementById('item-form-wrap').classList.remove('visible');
+  resetItemForm();
+  _editingItemId = null;
+}
+
+function resetItemForm() {
+  document.getElementById('item-form').reset();
+  document.getElementById('f-item-id').value = '';
+  ['f-name', 'f-description', 'f-price', 'f-image', 'f-availability'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.classList.remove('error'); }
+  });
+  ['err-f-name', 'err-f-description', 'err-f-price', 'err-f-image', 'err-f-availability'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = '';
+  });
+}
+
+function handleItemFormSubmit(event) {
+  event.preventDefault();
+  // Clear errors
+  ['err-f-name', 'err-f-description', 'err-f-price', 'err-f-image', 'err-f-availability'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = '';
+  });
+  ['f-name', 'f-description', 'f-price', 'f-image', 'f-availability'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.remove('error');
+  });
+
+  var priceRaw = document.getElementById('f-price').value;
+  var item = {
+    name: document.getElementById('f-name').value,
+    description: document.getElementById('f-description').value,
+    price: priceRaw !== '' ? parseFloat(priceRaw) : NaN,
+    image: document.getElementById('f-image').value,
+    availability: document.getElementById('f-availability').value
+  };
+
+  var result = validateFoodItem(item);
+  if (!result.valid) {
+    var fieldMap = {
+      name: { err: 'err-f-name', inp: 'f-name' },
+      description: { err: 'err-f-description', inp: 'f-description' },
+      price: { err: 'err-f-price', inp: 'f-price' },
+      image: { err: 'err-f-image', inp: 'f-image' },
+      availability: { err: 'err-f-availability', inp: 'f-availability' }
+    };
+    Object.keys(result.errors).forEach(function(field) {
+      var m = fieldMap[field];
+      if (m) {
+        var errEl = document.getElementById(m.err);
+        var inpEl = document.getElementById(m.inp);
+        if (errEl) errEl.textContent = result.errors[field];
+        if (inpEl) inpEl.classList.add('error');
+      }
+    });
+    return;
+  }
+
+  var btn = event.target.querySelector('button[type="submit"]');
+  if (btn) btn.disabled = true;
+
+  var onSuccess = function() {
+    if (btn) btn.disabled = false;
+    cancelItemForm();
+    loadFoodItems();
+  };
+  var onFail = function(err) {
+    if (btn) btn.disabled = false;
+    showError(err);
+  };
+
+  if (_editingItemId) {
+    item.id = _editingItemId;
+    google.script.run
+      .withSuccessHandler(onSuccess)
+      .withFailureHandler(onFail)
+      .updateFoodItem(item);
+  } else {
+    google.script.run
+      .withSuccessHandler(onSuccess)
+      .withFailureHandler(onFail)
+      .addFoodItem(item);
+  }
+}
+
+function deleteItem(id) {
+  if (!confirm('Are you sure you want to delete this food item? This cannot be undone.')) return;
+  google.script.run
+    .withSuccessHandler(function() {
+      loadFoodItems();
+    })
+    .withFailureHandler(showError)
+    .deleteFoodItem(id);
+}
+
+// ===== ORDERS TAB =====
+function loadOrders() {
+  document.getElementById('orders-loading').style.display = 'block';
+  document.getElementById('orders-content').style.display = 'none';
+  google.script.run
+    .withSuccessHandler(renderOrders)
+    .withFailureHandler(function(err) {
+      document.getElementById('orders-loading').style.display = 'none';
+      showError(err);
+    })
+    .getOrdersWithTodayCounts();
+}
+
+function renderOrders(data) {
+  document.getElementById('orders-loading').style.display = 'none';
+  document.getElementById('orders-content').style.display = 'block';
+
+  var counts = (data && data.today_counts) ? data.today_counts : {};
+  document.getElementById('count-received').textContent = counts.received || 0;
+  document.getElementById('count-payment_received').textContent = counts.payment_received || 0;
+  document.getElementById('count-in_progress').textContent = counts.in_progress || 0;
+  document.getElementById('count-completed').textContent = counts.completed || 0;
+
+  var orders = (data && data.orders) ? data.orders : [];
+  if (orders.length === 0) {
+    document.getElementById('orders-empty').style.display = 'block';
+    document.getElementById('orders-table-container').style.display = 'none';
+    document.getElementById('orders-cards').innerHTML = '';
+    return;
+  }
+  document.getElementById('orders-empty').style.display = 'none';
+  document.getElementById('orders-table-container').style.display = 'block';
+
+  var statusOptions = ['received', 'payment_received', 'in_progress', 'completed'];
+
+  function parseCart(order) {
+    try {
+      var arr = typeof order.cart_details === 'string' ? JSON.parse(order.cart_details) : order.cart_details;
+      return Array.isArray(arr) ? arr : [];
+    } catch(e) { return []; }
+  }
+
+  function makeStatusSelect(orderId, currentStatus) {
+    var html = '<select class="status-select" onchange="handleStatusChange(\'' + escapeAttr(orderId) + '\', this.value, this)">';
+    statusOptions.forEach(function(s) {
+      html += '<option value="' + s + '"' + (currentStatus === s ? ' selected' : '') + '>' + s.replace(/_/g, ' ') + '</option>';
+    });
+    return html + '</select>';
+  }
+
+  // ── Desktop table ──
+  var tbody = document.getElementById('orders-tbody');
+  tbody.innerHTML = '';
+  orders.forEach(function(order) {
+    var tr = document.createElement('tr');
+    var cartItems = parseCart(order);
+    var cartHtml = cartItems.length
+      ? '<ul class="cart-detail-list">' + cartItems.map(function(ci) { return '<li>' + escapeHtml(ci.name) + ' &times;' + ci.quantity + '</li>'; }).join('') + '</ul>'
+      : escapeHtml(String(order.cart_details || ''));
+
+    tr.innerHTML =
+      '<td><code class="order-id-code" title="' + escapeAttr(order.order_id) + '">' + escapeHtml(order.order_id) + '</code></td>' +
+      '<td>' + escapeHtml(order.customer_name) + '</td>' +
+      '<td style="white-space:nowrap;">' + escapeHtml(order.customer_whatsapp) + '</td>' +
+      '<td style="max-width:140px;word-break:break-word;">' + escapeHtml(order.customer_address) + '</td>' +
+      '<td>' + cartHtml + '</td>' +
+      '<td style="white-space:nowrap;">' + formatPrice(order.total_price) + '</td>' +
+      '<td>' + makeStatusSelect(order.order_id, order.status) + '</td>' +
+      '<td style="white-space:nowrap;font-size:12px;">' + escapeHtml(formatTimestamp(order.timestamp)) + '</td>';
+    tbody.appendChild(tr);
+  });
+
+  // ── Mobile cards ──
+  var cardsEl = document.getElementById('orders-cards');
+  cardsEl.innerHTML = '';
+  orders.forEach(function(order) {
+    var cartItems = parseCart(order);
+    var itemsHtml = cartItems.length
+      ? '<ul class="order-card-items">' + cartItems.map(function(ci) { return '<li>' + escapeHtml(ci.name) + ' &times;' + ci.quantity + ' — ' + formatPrice(ci.price * ci.quantity) + '</li>'; }).join('') + '</ul>'
+      : '';
+
+    var div = document.createElement('div');
+    div.className = 'order-card';
+    div.innerHTML =
+      '<div class="order-card-header">' +
+        '<span class="order-card-id">' + escapeHtml(order.order_id) + '</span>' +
+        makeStatusSelect(order.order_id, order.status) +
+      '</div>' +
+      '<div class="order-card-row"><span class="order-card-label">Customer</span><span class="order-card-value">' + escapeHtml(order.customer_name) + '</span></div>' +
+      '<div class="order-card-row"><span class="order-card-label">WhatsApp</span><span class="order-card-value">' + escapeHtml(order.customer_whatsapp) + '</span></div>' +
+      '<div class="order-card-row"><span class="order-card-label">Address</span><span class="order-card-value">' + escapeHtml(order.customer_address) + '</span></div>' +
+      itemsHtml +
+      '<div class="order-card-row"><span class="order-card-label">Total</span><span class="order-card-value" style="font-weight:700;">' + formatPrice(order.total_price) + '</span></div>' +
+      '<div class="order-card-row"><span class="order-card-label">Time</span><span class="order-card-value" style="font-size:12px;color:#6b7280;">' + escapeHtml(formatTimestamp(order.timestamp)) + '</span></div>';
+    cardsEl.appendChild(div);
+  });
+}
+
+function handleStatusChange(orderId, newStatus, selectEl) {
+  var prevValue = selectEl.dataset.prev || selectEl.value;
+  // Store current value as previous before the change
+  selectEl.dataset.prev = newStatus;
+
+  google.script.run
+    .withSuccessHandler(function() {
+      selectEl.dataset.prev = newStatus;
+    })
+    .withFailureHandler(function(err) {
+      // Revert dropdown on failure
+      selectEl.value = prevValue;
+      selectEl.dataset.prev = prevValue;
+      showError(err);
+    })
+    .updateOrderStatus(orderId, newStatus);
+}
+
+// ===== USERS TAB =====
+function loadUsers() {
+  document.getElementById('users-loading').style.display = 'block';
+  document.getElementById('users-table-wrap').style.display = 'none';
+  google.script.run
+    .withSuccessHandler(renderUsers)
+    .withFailureHandler(function(err) {
+      document.getElementById('users-loading').style.display = 'none';
+      showError(err);
+    })
+    .getUsers();
+}
+
+function renderUsers(users) {
+  document.getElementById('users-loading').style.display = 'none';
+  document.getElementById('users-table-wrap').style.display = 'block';
+
+  if (!users || users.length === 0) {
+    document.getElementById('users-empty').style.display = 'block';
+    document.getElementById('users-table-container').style.display = 'none';
+    return;
+  }
+  document.getElementById('users-empty').style.display = 'none';
+  document.getElementById('users-table-container').style.display = 'block';
+
+  var tbody = document.getElementById('users-tbody');
+  tbody.innerHTML = '';
+  users.forEach(function(user) {
+    var tr = document.createElement('tr');
+    var count = parseInt(user.order_count, 10) || 0;
+    var badgeClass = count > 1 ? 'count-badge repeat' : 'count-badge';
+    tr.innerHTML =
+      '<td>' + escapeHtml(user.name) + '</td>' +
+      '<td>' + escapeHtml(user.whatsapp_number) + '</td>' +
+      '<td class="td-truncate" title="' + escapeAttr(user.address) + '">' + escapeHtml(user.address) + '</td>' +
+      '<td><span class="' + badgeClass + '">' + count + '</span></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+// ===== LOGIN =====
+function handleLogin() {
+  var username = document.getElementById('login-username').value.trim();
+  var password = document.getElementById('login-password').value;
+  var errEl = document.getElementById('login-error');
+  var btn = document.getElementById('login-btn');
+
+  if (!username || !password) {
+    errEl.textContent = 'Please enter username and password.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+  errEl.textContent = '';
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result && result.success) {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('admin-portal').style.display = 'block';
+        loadFoodItems();
+        loadSettings();
+        settingsLoaded = true;
+      } else {
+        errEl.textContent = 'Invalid username or password.';
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    })
+    .withFailureHandler(function(err) {
+      errEl.textContent = 'Login failed. Please try again.';
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    })
+    .checkAdminAuth(username, password);
+}
+
+function handleLogout() {
+  document.getElementById('admin-portal').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+  document.getElementById('login-error').textContent = '';
+  document.getElementById('login-btn').disabled = false;
+  document.getElementById('login-btn').textContent = 'Sign In';
+}
+
+// Allow Enter key on login fields
+document.addEventListener('DOMContentLoaded', function() {
+  ['login-username', 'login-password'].forEach(function(id) {
+    document.getElementById(id).addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') handleLogin();
+    });
+  });
+});
+</script>
+</body>
+</html>
