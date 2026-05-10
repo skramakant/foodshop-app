@@ -63,9 +63,16 @@ export function buildWaMeUrl(shopNumber, message) {
 // ── Validation ─────────────────────────────────────────────────────────────
 export function validateOrderForm({ customer_name, customer_whatsapp, customer_address } = {}) {
   const errors = {};
-  if (!customer_name?.trim())    errors.customer_name    = 'Name is required';
-  if (!customer_whatsapp?.trim()) errors.customer_whatsapp = 'WhatsApp number is required';
-  if (!customer_address?.trim()) errors.customer_address  = 'Delivery address is required';
+  if (!customer_name?.trim()) errors.customer_name = 'Name is required';
+
+  const wa = (customer_whatsapp || '').trim().replace(/^\+/, '');
+  if (!wa) {
+    errors.customer_whatsapp = 'WhatsApp number is required';
+  } else if (!/^\d{10}$/.test(wa)) {
+    errors.customer_whatsapp = 'WhatsApp number must be exactly 10 digits';
+  }
+
+  if (!customer_address?.trim()) errors.customer_address = 'Delivery address is required';
   return { valid: Object.keys(errors).length === 0, errors };
 }
 
