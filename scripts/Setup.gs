@@ -30,7 +30,7 @@ function setupSpreadsheet() {
     },
     {
       name:    SHEET_USERS,
-      headers: ['whatsapp_number', 'name', 'address', 'order_count', 'last_updated'],
+      headers: ['whatsapp_number', 'name', 'address', 'order_count', 'last_updated', 'pin'],
     },
     {
       name:    SHEET_ORDERS,

@@ -274,7 +274,7 @@
       <!-- ── Track Order Section ── -->
       <section id="orders-section" class="content-section px-4 pt-5 pb-10 max-w-2xl mx-auto w-full">
         <h2 class="text-xl font-bold text-slate-800 mb-1">Track Your Order</h2>
-        <p class="text-sm text-slate-400 mb-6">Enter the WhatsApp number you used when placing your order.</p>
+        <p class="text-sm text-slate-400 mb-6">Enter the WhatsApp number and 6-digit PIN from your order confirmation message.</p>
 
         <div class="card p-5 mb-5">
           <div class="flex flex-col gap-3">
@@ -282,7 +282,11 @@
               <label class="form-label" for="track-whatsapp">WhatsApp Number</label>
               <input type="tel" id="track-whatsapp" class="form-input" placeholder="971501234567" />
             </div>
-            <button onclick="trackOrder()" class="btn-primary w-full">🔍 Find My Orders</button>
+            <div>
+              <label class="form-label" for="track-order-id">6-Digit PIN</label>
+              <input type="text" id="track-order-id" class="form-input" placeholder="Enter the PIN from your WhatsApp message" maxlength="6" inputmode="numeric" />
+            </div>
+            <button onclick="trackOrder()" class="btn-primary w-full">🔍 View My Orders</button>
           </div>
         </div>
 
@@ -431,7 +435,7 @@
               <span class="text-lg">📱</span>
               <div>
                 <div class="text-sm font-semibold text-blue-800 mb-0.5">Track your order</div>
-                <div class="text-xs text-blue-600 leading-relaxed">Use your WhatsApp number to track your order status anytime from the <strong>Track Order</strong> section in the menu.</div>
+                <div class="text-xs text-blue-600 leading-relaxed">Use your WhatsApp number and the <strong>6-digit PIN</strong> sent in your order message to view all your orders from the <strong>My Orders</strong> section.</div>
               </div>
             </div>
           </div>

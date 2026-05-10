@@ -376,12 +376,14 @@ window.handleConfirmOrder = async () => {
   };
 
   try {
-    await API.placeOrder(orderData);
+    const result = await API.placeOrder(orderData);
+    orderData.order_id = result?.order_id || '';
+    orderData.pin = result?.pin || '';
     cart = [];
     saveCart(cart);
     renderCart();
     if (orderViaWhatsApp) {
-      const msg = buildWhatsAppMessage(orderData.cart, orderData.customer_name, orderData.customer_whatsapp, orderData.customer_address);
+      const msg = buildWhatsAppMessage(orderData.cart, orderData.customer_name, orderData.customer_whatsapp, orderData.customer_address, orderData.pin);
       window.open(buildWaMeUrl(shopWhatsApp, msg), '_blank');
     }
     showStep(3);
@@ -394,20 +396,30 @@ window.handleConfirmOrder = async () => {
 // ── Track Order ────────────────────────────────────────────────────────────
 window.trackOrder = async () => {
   const whatsapp = document.getElementById('track-whatsapp').value.trim();
-  if (!whatsapp) {
-    document.getElementById('track-whatsapp').classList.add('invalid');
+  const pin      = document.getElementById('track-order-id').value.trim();
+  if (!whatsapp || !pin) {
+    if (!whatsapp) document.getElementById('track-whatsapp').classList.add('invalid');
+    if (!pin)      document.getElementById('track-order-id').classList.add('invalid');
     return;
   }
   document.getElementById('track-whatsapp').classList.remove('invalid');
+  document.getElementById('track-order-id').classList.remove('invalid');
   document.getElementById('track-loading').classList.remove('hidden');
   document.getElementById('track-empty').classList.add('hidden');
   document.getElementById('track-results').classList.add('hidden');
 
   try {
-    const orders = await API.getOrdersByWhatsApp(whatsapp);
+    const res = await API.getOrdersByPin(whatsapp, pin);
     document.getElementById('track-loading').classList.add('hidden');
 
-    if (!orders || !orders.length) {
+    if (res?.error) {
+      document.getElementById('track-empty').classList.remove('hidden');
+      document.getElementById('track-empty').querySelector('div:nth-child(2)').textContent = res.error;
+      return;
+    }
+
+    const orders = res?.orders || [];
+    if (!orders.length) {
       document.getElementById('track-empty').classList.remove('hidden');
       return;
     }
@@ -421,7 +433,7 @@ window.trackOrder = async () => {
       let cartItems = [];
       try { cartItems = typeof order.cart_details === 'string' ? JSON.parse(order.cart_details) : order.cart_details; } catch {}
       const itemsHtml = Array.isArray(cartItems)
-        ? cartItems.map(ci => `<span class="text-xs text-slate-600">${escapeHtml(ci.name)} ×${ci.quantity}</span>`).join(' · ')
+        ? cartItems.map(ci => `<div class="flex justify-between text-sm py-1 border-b border-slate-50 last:border-0"><span>${escapeHtml(ci.name)} ×${ci.quantity}</span><span class="font-semibold text-teal-700">${formatPrice(ci.price * ci.quantity)}</span></div>`).join('')
         : '';
       const statusLabel = statusLabels[order.status] || order.status;
       const statusColor = statusColors[order.status] || '#475569';
@@ -430,14 +442,22 @@ window.trackOrder = async () => {
 
       return `
         <div class="card overflow-hidden">
-          <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100" style="background:${statusBgCol}">
-            <span class="text-xs font-bold uppercase tracking-wide" style="color:${statusColor}">${statusLabel}</span>
-            <span class="text-xs text-slate-400">${date}</span>
+          <div class="px-4 py-3 border-b border-slate-100" style="background:${statusBgCol}">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-bold uppercase tracking-wide" style="color:${statusColor}">${statusLabel}</span>
+              <span class="text-xs text-slate-400">${date}</span>
+            </div>
           </div>
-          <div class="px-4 py-3 flex flex-col gap-1.5">
-            <div class="font-bold text-teal-700">${formatPrice(order.total_price)}</div>
-            ${itemsHtml ? `<div class="text-sm text-slate-500">${itemsHtml}</div>` : ''}
-            <div class="text-xs text-slate-400">📍 ${escapeHtml(order.customer_address || '')}</div>
+          <div class="px-4 py-4 flex flex-col gap-3">
+            <div class="flex flex-col gap-0.5">
+              <span class="text-xs text-slate-400 font-medium">Delivery Address</span>
+              <span class="text-sm">${escapeHtml(order.customer_address)}</span>
+            </div>
+            ${itemsHtml ? `<div class="flex flex-col gap-0.5"><span class="text-xs text-slate-400 font-medium mb-1">Items</span>${itemsHtml}</div>` : ''}
+            <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+              <span class="text-sm font-semibold text-slate-600">Total</span>
+              <span class="text-lg font-extrabold text-teal-700">${formatPrice(order.total_price)}</span>
+            </div>
           </div>
         </div>`;
     }).join('');

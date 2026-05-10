@@ -28,25 +28,30 @@ function placeOrder(orderData) {
     if (!ordersSheet) throw new Error('Sheet "' + SHEET_ORDERS + '" not found.');
     ordersSheet.appendRow(orderToRow(orderData, orderId, 'received', timestamp));
 
-    // 2. Upsert users sheet
+    // 2. Upsert users sheet — generate PIN for new users, preserve for returning
     var usersSheet = ss.getSheetByName(SHEET_USERS);
     if (!usersSheet) throw new Error('Sheet "' + SHEET_USERS + '" not found.');
 
-    var userRows     = usersSheet.getDataRange().getValues();
-    var foundRowIdx  = -1;
+    var userRows    = usersSheet.getDataRange().getValues();
+    var foundRowIdx = -1;
+    var existingPin = '';
 
-    for (var i = 1; i < userRows.length; i++) {   // skip header at i=0
+    for (var i = 1; i < userRows.length; i++) {
       if (String(userRows[i][0]) === String(orderData.customer_whatsapp)) {
-        foundRowIdx = i + 1;   // 1-based sheet row
+        foundRowIdx = i + 1;
+        existingPin = String(userRows[i][5] || ''); // col 5 = pin
         break;
       }
     }
 
+    // Generate a 6-digit PIN if this is a new user or pin is missing
+    var pin = existingPin || String(Math.floor(100000 + Math.random() * 900000));
+
     if (foundRowIdx !== -1) {
       var currentCount = Number(userRows[foundRowIdx - 1][3]) || 0;
-      // Update name, address, order_count, last_updated (cols 2-5)
-      usersSheet.getRange(foundRowIdx, 2, 1, 4).setValues([
-        [orderData.customer_name, orderData.customer_address, currentCount + 1, timestamp]
+      // Update name(2), address(3), order_count(4), last_updated(5), pin(6)
+      usersSheet.getRange(foundRowIdx, 2, 1, 5).setValues([
+        [orderData.customer_name, orderData.customer_address, currentCount + 1, timestamp, pin]
       ]);
     } else {
       usersSheet.appendRow(userToRow(
@@ -54,11 +59,12 @@ function placeOrder(orderData) {
         orderData.customer_name,
         orderData.customer_address,
         1,
-        timestamp
+        timestamp,
+        pin
       ));
     }
 
-    return { success: true, order_id: orderId };
+    return { success: true, order_id: orderId, pin: pin };
   } catch (e) {
     throw new Error('placeOrder failed: ' + e.message);
   }
@@ -131,28 +137,45 @@ function updateOrderStatus(orderId, status) {
 }
 
 /**
- * Returns all orders for a given customer WhatsApp number.
- * Called by: customer portal Track Order section
+ * Returns all orders for a customer verified by WhatsApp number + PIN.
+ * PIN is stored in the users sheet (col 5).
  *
  * @param {string} whatsapp
- * @returns {Array}
+ * @param {string} pin
+ * @returns {{ orders: Array }|{ error: string }}
  */
-function getOrdersByWhatsApp(whatsapp) {
+function getOrdersByPin(whatsapp, pin) {
   try {
-    var ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
-    var sheet = ss.getSheetByName(SHEET_ORDERS);
-    if (!sheet) throw new Error('Sheet "' + SHEET_ORDERS + '" not found.');
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
 
-    var rows   = sheet.getDataRange().getValues();
-    var orders = [];
-    for (var i = 1; i < rows.length; i++) {
-      // col index 4 = customer_whatsapp
-      if (rows[i][0] && String(rows[i][4]) === String(whatsapp)) {
-        orders.push(rowToOrder(rows[i]));
+    // 1. Verify PIN against users sheet
+    var usersSheet = ss.getSheetByName(SHEET_USERS);
+    if (!usersSheet) throw new Error('Sheet "' + SHEET_USERS + '" not found.');
+
+    var userRows = usersSheet.getDataRange().getValues();
+    var verified = false;
+    for (var i = 1; i < userRows.length; i++) {
+      if (String(userRows[i][0]) === String(whatsapp) &&
+          String(userRows[i][5]) === String(pin)) {
+        verified = true;
+        break;
       }
     }
-    return orders;
+    if (!verified) return { error: 'Invalid WhatsApp number or PIN.' };
+
+    // 2. Fetch all orders for this WhatsApp number
+    var ordersSheet = ss.getSheetByName(SHEET_ORDERS);
+    if (!ordersSheet) throw new Error('Sheet "' + SHEET_ORDERS + '" not found.');
+
+    var rows   = ordersSheet.getDataRange().getValues();
+    var orders = [];
+    for (var j = 1; j < rows.length; j++) {
+      if (rows[j][0] && String(rows[j][4]) === String(whatsapp)) {
+        orders.push(rowToOrder(rows[j]));
+      }
+    }
+    return { orders: orders };
   } catch (e) {
-    throw new Error('getOrdersByWhatsApp failed: ' + e.message);
+    throw new Error('getOrdersByPin failed: ' + e.message);
   }
 }

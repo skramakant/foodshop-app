@@ -10,18 +10,21 @@
 // Replace with your deployed GAS Web App URL
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzGu9zuiShUBc5FPjUgyZomf2_aZMXvX-e252CRWodfCycdlVPVvEOt3m4dMX-GRTkc/exec';
 
+// API key — must match the API_KEY value in GAS Script Properties
+// Set this in Apps Script → Project Settings → Script Properties → API_KEY
+const GAS_API_KEY = 'REPLACE_WITH_YOUR_API_KEY';
+
 // ── Core fetch helper ──────────────────────────────────────────────────────
 async function gasRequest(action, payload = {}) {
-  const body = JSON.stringify({ action, ...payload });
+  const body = JSON.stringify({ action, apiKey: GAS_API_KEY, ...payload });
   const res = await fetch(GAS_API_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain' }, // GAS requires text/plain for doPost
+    headers: { 'Content-Type': 'text/plain' },
     body,
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   if (data.error) throw new Error(data.error);
-  // Unwrap result so callers get the data directly
   return data.result !== undefined ? data.result : data;
 }
 
@@ -44,7 +47,7 @@ export const updateOrderStatus       = (orderId, status) => gasRequest('updateOr
 export const getUsers = () => gasRequest('getUsers');
 
 // ── Order tracking ─────────────────────────────────────────────────────────
-export const getOrdersByWhatsApp = (whatsapp) => gasRequest('getOrdersByWhatsApp', { whatsapp });
+export const getOrdersByPin = (whatsapp, pin) => gasRequest('getOrdersByPin', { whatsapp, pin });
 
 // ── Auth ───────────────────────────────────────────────────────────────────
 export const checkAdminAuth = (username, password) =>

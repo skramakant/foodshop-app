@@ -37,7 +37,7 @@ export function formatTimestamp(ts) {
 }
 
 // ── WhatsApp message builder ───────────────────────────────────────────────
-export function buildWhatsAppMessage(cart, customerName, customerWhatsApp, customerAddress) {
+export function buildWhatsAppMessage(cart, customerName, customerWhatsApp, customerAddress, pin) {
   const itemLines = cart.map(item => {
     const subtotal = item.price * item.quantity;
     return `- ${item.name} x${item.quantity} @ ${item.price} = ${subtotal}`;
@@ -50,6 +50,9 @@ export function buildWhatsAppMessage(cart, customerName, customerWhatsApp, custo
     `Customer Name: ${customerName}`,
     `Customer WhatsApp: ${customerWhatsApp}`,
     `Delivery Address: ${customerAddress}`,
+    '',
+    `🔑 Your PIN: ${pin || 'N/A'}`,
+    '(Use this PIN with your WhatsApp number to track all your orders)',
   ].join('\n');
 }
 

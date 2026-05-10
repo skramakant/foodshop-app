@@ -29,24 +29,38 @@ var ACTION_MAP = {
   // Auth
   checkAdminAuth:   function(p)    { return checkAdminAuth(p.username, p.password); },
   // Order tracking
-  getOrdersByWhatsApp: function(p) { return getOrdersByWhatsApp(p.whatsapp); },
+  getOrdersByPin: function(p) { return getOrdersByPin(p.whatsapp, p.pin); },
 };
+
+// Actions that require admin credentials in addition to the API key
+var ADMIN_ONLY_ACTIONS = [
+  'saveShopMetadata',
+  'addFoodItem',
+  'updateFoodItem',
+  'deleteFoodItem',
+  'updateOrderStatus',
+  'getUsers',
+  'getOrdersWithTodayCounts',
+];
 
 /**
  * JSON API handler for the standalone frontend.
- * Accepts POST with body: { action: string, ...params }
+ * Accepts POST with body: { action, apiKey, ...params }
  * Returns: { result: any } or { error: string }
  */
 function doPost(e) {
-  var headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST',
-    'Access-Control-Allow-Headers': 'Content-Type',
-  };
-
   try {
     var body   = JSON.parse(e.postData.contents);
     var action = body.action;
+
+    // ── API key validation ────────────────────────────────────────────────
+    var props       = PropertiesService.getScriptProperties();
+    var expectedKey = props.getProperty('API_KEY');
+    if (expectedKey && body.apiKey !== expectedKey) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ error: 'Unauthorized' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
 
     if (!action || !ACTION_MAP[action]) {
       throw new Error('Unknown action: ' + action);

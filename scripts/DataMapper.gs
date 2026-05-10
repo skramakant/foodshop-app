@@ -59,11 +59,11 @@ function foodItemToRow(item) {
 }
 
 // ── users sheet ───────────────────────────────────────────────────────────
-// Columns: whatsapp_number(0), name(1), address(2), order_count(3), last_updated(4)
+// Columns: whatsapp_number(0), name(1), address(2), order_count(3), last_updated(4), pin(5)
 
 /**
  * @param {Array} row
- * @returns {{ whatsapp_number, name, address, order_count, last_updated }}
+ * @returns {{ whatsapp_number, name, address, order_count, last_updated, pin }}
  */
 function rowToUser(row) {
   return {
@@ -72,6 +72,7 @@ function rowToUser(row) {
     address:         String(row[2] || ''),
     order_count:     Number(row[3]),
     last_updated:    String(row[4] || ''),
+    pin:             String(row[5] || ''),
   };
 }
 
@@ -81,10 +82,11 @@ function rowToUser(row) {
  * @param {string} address
  * @param {number} orderCount
  * @param {string} timestamp
+ * @param {string} pin
  * @returns {Array}
  */
-function userToRow(whatsapp, name, address, orderCount, timestamp) {
-  return [whatsapp, name, address, orderCount, timestamp];
+function userToRow(whatsapp, name, address, orderCount, timestamp, pin) {
+  return [whatsapp, name, address, orderCount, timestamp, pin || ''];
 }
 
 // ── orders sheet ──────────────────────────────────────────────────────────
