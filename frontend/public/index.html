@@ -222,7 +222,20 @@
         <button class="sidebar-nav-item" id="sidebar-nav-about" onclick="showSection('about-section')">
           <span class="nav-icon">✨</span> About InstaShop
         </button>
+        <!-- Login (shown when logged out) -->
+        <button class="sidebar-nav-item" id="sidebar-nav-login" onclick="showSection('login-section')">
+          <span class="nav-icon">🔑</span> Login
+        </button>
+        <!-- Logout (shown when logged in) -->
+        <button class="sidebar-nav-item hidden" id="sidebar-nav-logout" onclick="customerLogout()">
+          <span class="nav-icon">🚪</span> Logout
+        </button>
       </nav>
+      <!-- Logged-in user info -->
+      <div id="sidebar-user-info" class="hidden px-4 py-3 border-t border-white/10">
+        <div class="text-xs text-white/50 mb-0.5">Logged in as</div>
+        <div id="sidebar-user-wa" class="text-sm font-semibold text-white truncate"></div>
+      </div>
     </aside>
 
     <!-- Content Area -->
@@ -276,25 +289,48 @@
         </div>
       </section>
 
-      <!-- ── My Orders Section ── -->
-      <section id="orders-section" class="content-section px-4 pt-5 pb-10 max-w-2xl mx-auto w-full">        <h2 class="text-xl font-bold text-slate-800 mb-1">My Orders</h2>
-        <p class="text-sm text-slate-400 mb-6">Enter the WhatsApp number and 6-digit PIN from your order confirmation message.</p>
+      <!-- ── Login Section ── -->
+      <section id="login-section" class="content-section px-4 pt-5 pb-10 max-w-2xl mx-auto w-full">
+        <h2 class="text-xl font-bold text-slate-800 mb-1">Login</h2>
+        <p class="text-sm text-slate-400 mb-6">Enter your WhatsApp number and PIN to access your orders.</p>
+        <div class="card p-5">
+          <div class="flex flex-col gap-3">
+            <div>
+              <label class="form-label" for="login-wa">WhatsApp Number</label>
+              <input type="tel" id="login-wa" class="form-input" placeholder="10-digit number" maxlength="10" inputmode="numeric" />
+            </div>
+            <div>
+              <label class="form-label" for="login-pin">6-Digit PIN</label>
+              <input type="text" id="login-pin" class="form-input" placeholder="PIN from your WhatsApp message" maxlength="6" inputmode="numeric" />
+            </div>
+            <div id="login-error" class="hidden text-red-500 text-sm"></div>
+            <button onclick="customerLogin()" class="btn-primary w-full">🔑 Login</button>
+          </div>
+        </div>
+        <p class="text-xs text-slate-400 mt-4 text-center">Your PIN was sent to your WhatsApp when you placed your first order.</p>
+      </section>
 
-        <div class="card p-5 mb-5">
+      <!-- ── My Orders Section ── -->
+      <section id="orders-section" class="content-section px-4 pt-5 pb-10 max-w-2xl mx-auto w-full">
+        <h2 class="text-xl font-bold text-slate-800 mb-4">My Orders</h2>
+
+        <!-- Logged-out state: ask for credentials -->
+        <div id="orders-login-prompt" class="card p-5 mb-5">
+          <p class="text-sm text-slate-500 mb-4">Enter your WhatsApp number and PIN to view your orders.</p>
           <div class="flex flex-col gap-3">
             <div>
               <label class="form-label" for="track-whatsapp">WhatsApp Number</label>
-              <input type="tel" id="track-whatsapp" class="form-input" placeholder="971501234567" />
+              <input type="tel" id="track-whatsapp" class="form-input" placeholder="10-digit number" maxlength="10" inputmode="numeric" />
             </div>
             <div>
               <label class="form-label" for="track-order-id">6-Digit PIN</label>
-              <input type="text" id="track-order-id" class="form-input" placeholder="Enter the PIN from your WhatsApp message" maxlength="6" inputmode="numeric" />
+              <input type="text" id="track-order-id" class="form-input" placeholder="PIN from your WhatsApp message" maxlength="6" inputmode="numeric" />
             </div>
-            <button onclick="trackOrder()" class="btn-primary w-full">🔍 View My Orders</button>
+            <button onclick="trackOrder()" class="btn-primary w-full">📦 View My Orders</button>
           </div>
         </div>
 
-        <div id="track-loading" class="hidden text-center py-8 text-slate-400">⏳ Looking up your orders…</div>
+        <div id="track-loading" class="hidden text-center py-8 text-slate-400">⏳ Loading your orders…</div>
         <div id="track-empty" class="hidden card p-8 text-center text-slate-400">
           <div class="text-4xl mb-3">📦</div>
           <div class="font-semibold text-slate-600 mb-1">No orders found</div>
@@ -432,6 +468,9 @@
       </button>
       <button class="bottom-nav-item" id="bottom-nav-about" onclick="showSection('about-section')">
         <span class="nav-icon">✨</span>About
+      </button>
+      <button class="bottom-nav-item" id="bottom-nav-login" onclick="showSection('login-section')">
+        <span class="nav-icon">🔑</span>Login
       </button>
     </div>
   </nav>

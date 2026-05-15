@@ -16,16 +16,92 @@ let shopClosed = false;
 let orderViaWhatsApp = false;
 let pendingCustomer = { name: '', whatsapp: '', address: '' };
 
+// ── Customer session (localStorage, no expiry — logout only on explicit action) ──
+const CUSTOMER_SESSION_KEY = 'customer_session';
+
+function getCustomerSession() {
+  try {
+    const raw = localStorage.getItem(CUSTOMER_SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function saveCustomerSession(whatsapp, pin) {
+  localStorage.setItem(CUSTOMER_SESSION_KEY, JSON.stringify({ whatsapp, pin }));
+}
+
+function clearCustomerSession() {
+  localStorage.removeItem(CUSTOMER_SESSION_KEY);
+}
+
+function updateLoginUI() {
+  const session = getCustomerSession();
+  const loginBtn   = document.getElementById('sidebar-nav-login');
+  const logoutBtn  = document.getElementById('sidebar-nav-logout');
+  const userInfo   = document.getElementById('sidebar-user-info');
+  const userWa     = document.getElementById('sidebar-user-wa');
+  const bottomLogin = document.getElementById('bottom-nav-login');
+
+  if (session) {
+    if (loginBtn)    loginBtn.classList.add('hidden');
+    if (logoutBtn)   logoutBtn.classList.remove('hidden');
+    if (userInfo)    userInfo.classList.remove('hidden');
+    if (userWa)      userWa.textContent = session.whatsapp;
+    if (bottomLogin) bottomLogin.classList.add('hidden');
+    // Hide login prompt in My Orders, show orders directly
+    const prompt = document.getElementById('orders-login-prompt');
+    if (prompt) prompt.classList.add('hidden');
+  } else {
+    if (loginBtn)    loginBtn.classList.remove('hidden');
+    if (logoutBtn)   logoutBtn.classList.add('hidden');
+    if (userInfo)    userInfo.classList.add('hidden');
+    if (bottomLogin) bottomLogin.classList.remove('hidden');
+    // Show login prompt in My Orders
+    const prompt = document.getElementById('orders-login-prompt');
+    if (prompt) prompt.classList.remove('hidden');
+  }
+}
+
+window.customerLogin = async () => {
+  const wa  = document.getElementById('login-wa').value.trim();
+  const pin = document.getElementById('login-pin').value.trim();
+  const err = document.getElementById('login-error');
+  err.classList.add('hidden');
+
+  if (!wa || !pin) { err.textContent = 'Please enter both WhatsApp number and PIN.'; err.classList.remove('hidden'); return; }
+
+  try {
+    const res = await API.getOrdersByPin(wa, pin);
+    if (res?.error) { err.textContent = res.error; err.classList.remove('hidden'); return; }
+    saveCustomerSession(wa, pin);
+    updateLoginUI();
+    showSection('orders-section');
+    loadMyOrders(wa, pin);
+  } catch (e) {
+    err.textContent = 'Login failed. Please check your details.';
+    err.classList.remove('hidden');
+  }
+};
+
+window.customerLogout = () => {
+  clearCustomerSession();
+  updateLoginUI();
+  document.getElementById('track-results').classList.add('hidden');
+  document.getElementById('track-empty').classList.add('hidden');
+  showSection('menu-section');
+};
+
 // ── Section switching ──────────────────────────────────────────────────────
 const SECTION_NAV_MAP = {
   'shop-info-section': { sidebar: 'sidebar-nav-shop-info', bottom: 'bottom-nav-shop-info' },
   'menu-section':      { sidebar: 'sidebar-nav-menu',      bottom: 'bottom-nav-menu' },
   'orders-section':    { sidebar: 'sidebar-nav-orders',    bottom: 'bottom-nav-orders' },
   'about-section':     { sidebar: 'sidebar-nav-about',     bottom: 'bottom-nav-about' },
+  'login-section':     { sidebar: 'sidebar-nav-login',     bottom: 'bottom-nav-login' },
 };
 
 window.showSection = (sectionId) => {
-  ['shop-info-section', 'menu-section', 'orders-section', 'about-section'].forEach(id => {
+  ['shop-info-section', 'menu-section', 'orders-section', 'about-section', 'login-section'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.toggle('active', id === sectionId);
   });
@@ -36,11 +112,31 @@ window.showSection = (sectionId) => {
     if (sideEl) sideEl.classList.toggle('active', isActive);
     if (botEl)  botEl.classList.toggle('active', isActive);
   });
+
+  // Auto-load orders if logged in and navigating to orders section
+  if (sectionId === 'orders-section') {
+    const session = getCustomerSession();
+    if (session) {
+      loadMyOrders(session.whatsapp, session.pin);
+    }
+  }
 };
 
 // ── Init ───────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   renderCart();
+  updateLoginUI();
+
+  // Auto-load orders if session exists and user navigates to orders
+  const session = getCustomerSession();
+  if (session) {
+    // Pre-fill the track fields in case they're visible
+    const waEl = document.getElementById('track-whatsapp');
+    const pinEl = document.getElementById('track-order-id');
+    if (waEl) waEl.value = session.whatsapp;
+    if (pinEl) pinEl.value = session.pin;
+  }
+
   Promise.all([
     API.getShopMetadata().then(onMetadataLoaded).catch(showError),
     API.getFoodItems().then(renderMenu).catch(showError),
@@ -394,7 +490,24 @@ window.handleConfirmOrder = async () => {
   }
 };
 
-// ── Track Order ────────────────────────────────────────────────────────────
+// ── Track Order / My Orders ────────────────────────────────────────────────
+async function loadMyOrders(whatsapp, pin) {
+  document.getElementById('track-loading').classList.remove('hidden');
+  document.getElementById('track-empty').classList.add('hidden');
+  document.getElementById('track-results').classList.add('hidden');
+  try {
+    const res = await API.getOrdersByPin(whatsapp, pin);
+    document.getElementById('track-loading').classList.add('hidden');
+    if (res?.error) { document.getElementById('track-empty').classList.remove('hidden'); return; }
+    const orders = res?.orders || [];
+    if (!orders.length) { document.getElementById('track-empty').classList.remove('hidden'); return; }
+    renderOrderResults(orders);
+  } catch (err) {
+    document.getElementById('track-loading').classList.add('hidden');
+    showError(err);
+  }
+}
+
 window.trackOrder = async () => {
   const whatsapp = document.getElementById('track-whatsapp').value.trim();
   const pin      = document.getElementById('track-order-id').value.trim();
@@ -405,70 +518,77 @@ window.trackOrder = async () => {
   }
   document.getElementById('track-whatsapp').classList.remove('invalid');
   document.getElementById('track-order-id').classList.remove('invalid');
-  document.getElementById('track-loading').classList.remove('hidden');
-  document.getElementById('track-empty').classList.add('hidden');
-  document.getElementById('track-results').classList.add('hidden');
 
-  try {
-    const res = await API.getOrdersByPin(whatsapp, pin);
-    document.getElementById('track-loading').classList.add('hidden');
-
-    if (res?.error) {
-      document.getElementById('track-empty').classList.remove('hidden');
-      document.getElementById('track-empty').querySelector('div:nth-child(2)').textContent = res.error;
-      return;
+  // Auto-login on successful order lookup
+  const res = await (async () => {
+    document.getElementById('track-loading').classList.remove('hidden');
+    document.getElementById('track-empty').classList.add('hidden');
+    document.getElementById('track-results').classList.add('hidden');
+    try {
+      return await API.getOrdersByPin(whatsapp, pin);
+    } catch (err) {
+      document.getElementById('track-loading').classList.add('hidden');
+      showError(err);
+      return null;
     }
+  })();
 
-    const orders = res?.orders || [];
-    if (!orders.length) {
-      document.getElementById('track-empty').classList.remove('hidden');
-      return;
-    }
+  document.getElementById('track-loading').classList.add('hidden');
+  if (!res) return;
 
-    const statusLabels = { received: 'Received', payment_received: 'Payment Received', in_progress: 'In Progress', completed: 'Completed' };
-    const statusColors = { received: '#1d4ed8', payment_received: '#6d28d9', in_progress: '#c2410c', completed: '#15803d' };
-    const statusBg     = { received: '#dbeafe', payment_received: '#ede9fe', in_progress: '#ffedd5', completed: '#dcfce7' };
-
-    const resultsEl = document.getElementById('track-results');
-    resultsEl.innerHTML = orders.slice().reverse().map(order => {
-      let cartItems = [];
-      try { cartItems = typeof order.cart_details === 'string' ? JSON.parse(order.cart_details) : order.cart_details; } catch {}
-      const itemsHtml = Array.isArray(cartItems)
-        ? cartItems.map(ci => `<div class="flex justify-between text-sm py-1 border-b border-slate-50 last:border-0"><span>${escapeHtml(ci.name)} ×${ci.quantity}</span><span class="font-semibold text-teal-700">${formatPrice(ci.price * ci.quantity)}</span></div>`).join('')
-        : '';
-      const statusLabel = statusLabels[order.status] || order.status;
-      const statusColor = statusColors[order.status] || '#475569';
-      const statusBgCol = statusBg[order.status] || '#f1f5f9';
-      const date = order.timestamp ? new Date(order.timestamp).toLocaleString() : '';
-
-      return `
-        <div class="card overflow-hidden">
-          <div class="px-4 py-3 border-b border-slate-100" style="background:${statusBgCol}">
-            <div class="flex items-center justify-between">
-              <span class="text-sm font-bold uppercase tracking-wide" style="color:${statusColor}">${statusLabel}</span>
-              <span class="text-xs text-slate-400">${date}</span>
-            </div>
-          </div>
-          <div class="px-4 py-4 flex flex-col gap-3">
-            <div class="flex flex-col gap-0.5">
-              <span class="text-xs text-slate-400 font-medium">Delivery Address</span>
-              <span class="text-sm">${escapeHtml(order.customer_address)}</span>
-            </div>
-            ${itemsHtml ? `<div class="flex flex-col gap-0.5"><span class="text-xs text-slate-400 font-medium mb-1">Items</span>${itemsHtml}</div>` : ''}
-            <div class="flex justify-between items-center pt-2 border-t border-slate-100">
-              <span class="text-sm font-semibold text-slate-600">Total</span>
-              <span class="text-lg font-extrabold text-teal-700">${formatPrice(order.total_price)}</span>
-            </div>
-          </div>
-        </div>`;
-    }).join('');
-
-    resultsEl.classList.remove('hidden');
-  } catch (err) {
-    document.getElementById('track-loading').classList.add('hidden');
-    showError(err);
+  if (res?.error) {
+    document.getElementById('track-empty').classList.remove('hidden');
+    return;
   }
+
+  // Save session — user is now logged in
+  saveCustomerSession(whatsapp, pin);
+  updateLoginUI();
+
+  const orders = res?.orders || [];
+  if (!orders.length) { document.getElementById('track-empty').classList.remove('hidden'); return; }
+  renderOrderResults(orders);
 };
+
+function renderOrderResults(orders) {
+  const statusLabels = { received: 'Received', payment_received: 'Payment Received', in_progress: 'In Progress', completed: 'Completed' };
+  const statusColors = { received: '#1d4ed8', payment_received: '#6d28d9', in_progress: '#c2410c', completed: '#15803d' };
+  const statusBg     = { received: '#dbeafe', payment_received: '#ede9fe', in_progress: '#ffedd5', completed: '#dcfce7' };
+
+  const resultsEl = document.getElementById('track-results');
+  resultsEl.innerHTML = orders.slice().reverse().map(order => {
+    let cartItems = [];
+    try { cartItems = typeof order.cart_details === 'string' ? JSON.parse(order.cart_details) : order.cart_details; } catch {}
+    const itemsHtml = Array.isArray(cartItems)
+      ? cartItems.map(ci => `<div class="flex justify-between text-sm py-1 border-b border-slate-50 last:border-0"><span>${escapeHtml(ci.name)} ×${ci.quantity}</span><span class="font-semibold text-teal-700">${formatPrice(ci.price * ci.quantity)}</span></div>`).join('')
+      : '';
+    const statusLabel = statusLabels[order.status] || order.status;
+    const statusColor = statusColors[order.status] || '#475569';
+    const statusBgCol = statusBg[order.status] || '#f1f5f9';
+    const date = order.timestamp ? new Date(order.timestamp).toLocaleString() : '';
+    return `
+      <div class="card overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-100" style="background:${statusBgCol}">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-bold uppercase tracking-wide" style="color:${statusColor}">${statusLabel}</span>
+            <span class="text-xs text-slate-400">${date}</span>
+          </div>
+        </div>
+        <div class="px-4 py-4 flex flex-col gap-3">
+          <div class="flex flex-col gap-0.5">
+            <span class="text-xs text-slate-400 font-medium">Delivery Address</span>
+            <span class="text-sm">${escapeHtml(order.customer_address)}</span>
+          </div>
+          ${itemsHtml ? `<div class="flex flex-col gap-0.5"><span class="text-xs text-slate-400 font-medium mb-1">Items</span>${itemsHtml}</div>` : ''}
+          <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+            <span class="text-sm font-semibold text-slate-600">Total</span>
+            <span class="text-lg font-extrabold text-teal-700">${formatPrice(order.total_price)}</span>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+  resultsEl.classList.remove('hidden');
+}
 
 // ── Pull-to-refresh ────────────────────────────────────────────────────────
 function setupPullToRefresh() {
