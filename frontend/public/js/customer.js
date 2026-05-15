@@ -36,25 +36,27 @@ function clearCustomerSession() {
 
 function updateLoginUI() {
   const session = getCustomerSession();
-  const loginBtn     = document.getElementById('sidebar-nav-login');
-  const logoutBtn    = document.getElementById('sidebar-nav-logout');
   const userInfo     = document.getElementById('sidebar-user-info');
   const userWa       = document.getElementById('sidebar-user-wa');
-  const bottomLogin  = document.getElementById('bottom-nav-login');
-  const bottomLogout = document.getElementById('bottom-nav-logout');
   const sidebarSub   = document.querySelector('.sidebar-logo p');
-  // Login section states
   const loggedInCard = document.getElementById('login-logged-in');
   const loginForm    = document.getElementById('login-form-wrap');
   const loginWaLabel = document.getElementById('login-logged-in-wa');
 
+  // Update single login/logout button — sidebar
+  const sideIcon  = document.getElementById('sidebar-login-icon');
+  const sideLabel = document.getElementById('sidebar-login-label');
+  // Update single login/logout button — bottom nav
+  const botIcon   = document.getElementById('bottom-login-icon');
+  const botLabel  = document.getElementById('bottom-login-label');
+
   if (session) {
-    if (loginBtn)     loginBtn.classList.add('hidden');
-    if (logoutBtn)    logoutBtn.classList.remove('hidden');
+    if (sideIcon)  sideIcon.textContent  = '🚪';
+    if (sideLabel) sideLabel.textContent = 'Logout';
+    if (botIcon)   botIcon.textContent   = '🚪';
+    if (botLabel)  botLabel.textContent  = 'Logout';
     if (userInfo)     userInfo.classList.remove('hidden');
     if (userWa)       userWa.textContent = session.whatsapp;
-    if (bottomLogin)  bottomLogin.classList.add('hidden');
-    if (bottomLogout) bottomLogout.classList.remove('hidden');
     if (sidebarSub)   sidebarSub.textContent = '✅ ' + session.whatsapp;
     if (loggedInCard) loggedInCard.classList.remove('hidden');
     if (loginForm)    loginForm.classList.add('hidden');
@@ -62,11 +64,11 @@ function updateLoginUI() {
     const prompt = document.getElementById('orders-login-prompt');
     if (prompt) prompt.classList.add('hidden');
   } else {
-    if (loginBtn)     loginBtn.classList.remove('hidden');
-    if (logoutBtn)    logoutBtn.classList.add('hidden');
+    if (sideIcon)  sideIcon.textContent  = '🔑';
+    if (sideLabel) sideLabel.textContent = 'Login';
+    if (botIcon)   botIcon.textContent   = '🔑';
+    if (botLabel)  botLabel.textContent  = 'Login';
     if (userInfo)     userInfo.classList.add('hidden');
-    if (bottomLogin)  bottomLogin.classList.remove('hidden');
-    if (bottomLogout) bottomLogout.classList.add('hidden');
     if (sidebarSub)   sidebarSub.textContent = 'Order Online';
     if (loggedInCard) loggedInCard.classList.add('hidden');
     if (loginForm)    loginForm.classList.remove('hidden');
@@ -74,6 +76,15 @@ function updateLoginUI() {
     if (prompt) prompt.classList.remove('hidden');
   }
 }
+
+window.handleLoginNavClick = () => {
+  const session = getCustomerSession();
+  if (session) {
+    customerLogout();
+  } else {
+    showSection('login-section');
+  }
+};
 
 window.customerLogin = async () => {
   const wa  = document.getElementById('login-wa').value.trim();

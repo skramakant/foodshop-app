@@ -222,13 +222,10 @@
         <button class="sidebar-nav-item" id="sidebar-nav-about" onclick="showSection('about-section')">
           <span class="nav-icon">✨</span> About InstaShop
         </button>
-        <!-- Login (shown when logged out) -->
-        <button class="sidebar-nav-item" id="sidebar-nav-login" onclick="showSection('login-section')">
-          <span class="nav-icon">🔑</span> Login
-        </button>
-        <!-- Logout (shown when logged in) -->
-        <button class="sidebar-nav-item hidden" id="sidebar-nav-logout" onclick="customerLogout()">
-          <span class="nav-icon">🚪</span> Logout
+        <!-- Login/Logout — single button that toggles -->
+        <button class="sidebar-nav-item" id="sidebar-nav-login" onclick="handleLoginNavClick()">
+          <span class="nav-icon" id="sidebar-login-icon">🔑</span>
+          <span id="sidebar-login-label">Login</span>
         </button>
       </nav>
       <!-- Logged-in user info -->
@@ -488,11 +485,9 @@
       <button class="bottom-nav-item" id="bottom-nav-about" onclick="showSection('about-section')">
         <span class="nav-icon">✨</span>About
       </button>
-      <button class="bottom-nav-item" id="bottom-nav-login" onclick="showSection('login-section')">
-        <span class="nav-icon">🔑</span>Login
-      </button>
-      <button class="bottom-nav-item hidden" id="bottom-nav-logout" onclick="customerLogout()">
-        <span class="nav-icon">🚪</span>Logout
+      <button class="bottom-nav-item" id="bottom-nav-login" onclick="handleLoginNavClick()">
+        <span class="nav-icon" id="bottom-login-icon">🔑</span>
+        <span id="bottom-login-label">Login</span>
       </button>
     </div>
   </nav>
