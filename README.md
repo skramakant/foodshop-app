@@ -1,13 +1,16 @@
-# Food Shop App
+# InstaShop — Food Shop App
 
-A food shop web application with a mobile-first customer portal and an admin portal.
+A mobile-first food shop web application with a customer portal and an admin portal, powered by **InstaShop**.
 
-- **Customer Portal** — browse menu, add to cart, place orders via WhatsApp, track orders with PIN
-- **Admin Portal** — manage food items, shop settings, orders (auto-refresh + notifications), and customers
+> *"Your shop, online, simplified."*
+
+- **Customer Portal** — browse menu, add to cart, place orders via WhatsApp, track orders with PIN, About InstaShop page
+- **Admin Portal** — manage food items, shop settings, orders (auto-refresh + notifications), customers with order history
 
 **Architecture:**
-- **Frontend** — standalone HTML/CSS/JS deployed on GitHub Pages
-- **Backend** — Google Apps Script Web App connected to Google Sheets as the database
+- **Frontend** — standalone HTML/CSS/JS (Tailwind) deployed on GitHub Pages — no iframe, proper mobile support
+- **Backend** — Google Apps Script Web App + Google Sheets as database
+- **Security** — API key injected at build time via GitHub Secrets, never stored in repo
 
 ---
 
@@ -22,7 +25,7 @@ frontend/
 │   └── js/
 │       ├── api.js        ← All GAS API calls (secrets injected at build time)
 │       ├── cart.js       ← Cart logic
-│       ├── utils.js      ← Shared utilities
+│       ├── utils.js      ← Shared utilities + validation
 │       ├── customer.js   ← Customer portal logic
 │       └── admin.js      ← Admin portal logic
 ├── src/
@@ -31,13 +34,13 @@ frontend/
 ├── tailwind.config.js
 └── package.json
 
-scripts/                  ← Google Apps Script backend
+scripts/                  ← Google Apps Script backend (modular)
 ├── Main.gs               ← HTTP router (doGet + doPost) + API key validation
 ├── Config.gs             ← Constants, credentials, app config
 ├── ShopService.gs        ← Shop settings read/write
 ├── FoodService.gs        ← Food item CRUD
 ├── OrderService.gs       ← Order placement, management, PIN-based lookup
-├── UserService.gs        ← Customer records
+├── UserService.gs        ← Customer records (deduplicated by WhatsApp)
 ├── DataMapper.gs         ← Row ↔ object converters (includes pin column)
 ├── Validation.gs         ← Input validation
 └── Setup.gs              ← One-time spreadsheet initialisation
@@ -55,17 +58,20 @@ scripts/                  ← Google Apps Script backend
 - Browse menu with images, descriptions, prices
 - Add to cart with popup notification
 - 3-step order flow: details → review → confirm
-- Order via WhatsApp (deep-link) or silent order
+- Order via WhatsApp (deep-link with PIN included) or silent order
 - **My Orders** — enter WhatsApp number + 6-digit PIN to view all orders and status
 - Pull-to-refresh on menu
+- About InstaShop page with contact details
+- "Powered by InstaShop" footer
 
-### Admin Portal
-- Login with username/password (24-hour session persistence)
+### Admin Portal (InstaShop)
+- Login with username/password (24-hour session persistence via localStorage)
 - Left sidebar navigation (desktop) + bottom tab bar (mobile)
-- **Shop tab** — configure name, WhatsApp, email, address, status
-- **Food tab** — add/edit/delete menu items
-- **Orders tab** — all-time stats + today's stats, order cards with status dropdown, auto-refresh every 60s with bell notification + sound
-- **Customers tab** — view all customers and order counts
+- Default landing page: **Orders tab**
+- **Shop tab** — configure name, WhatsApp, email, address, status, currency symbol
+- **Food tab** — add/edit/delete menu items with image, price, description, availability
+- **Orders tab** — all-time stats + today's stats with date, order cards with status dropdown, auto-refresh every 60s with bell notification + sound
+- **Customers tab** — expandable customer cards showing PIN, address, and full order history
 
 ---
 
@@ -78,13 +84,13 @@ scripts/                  ← Google Apps Script backend
 - Copy the **Spreadsheet ID** from the URL
 
 **2. Create the Apps Script project**
-- Go to [script.google.com](https://script.google.com) → New project
+- Go to [script.google.com](https://script.google.com) → New project → name it
 
 **3. Copy all script files**
 
 Create each file in the Apps Script editor (click **+** → Script):
 
-| Local file | Apps Script file name |
+| Local file | Apps Script name |
 |---|---|
 | `scripts/Config.gs` | `Config` |
 | `scripts/DataMapper.gs` | `DataMapper` |
@@ -96,9 +102,7 @@ Create each file in the Apps Script editor (click **+** → Script):
 | `scripts/Setup.gs` | `Setup` |
 | `scripts/Main.gs` | `Main` |
 
-**4. Set your Spreadsheet ID**
-
-In `Config.gs`:
+**4. Set your Spreadsheet ID** in `Config.gs`:
 ```javascript
 var SPREADSHEET_ID = 'your-spreadsheet-id-here';
 ```
@@ -107,12 +111,12 @@ var SPREADSHEET_ID = 'your-spreadsheet-id-here';
 
 Apps Script → **Project Settings → Script Properties**:
 
-| Key | Value | Description |
+| Key | Default | Description |
 |---|---|---|
 | `CURRENCY_SYMBOL` | `Rs` | Currency prefix (e.g. `AED`, `$`) |
 | `ADMIN_USERNAME` | `admin` | Admin portal login username |
 | `ADMIN_PASSWORD` | `admin123` | Admin portal login password |
-| `API_KEY` | `your-secret-key` | API key — must match `GAS_API_KEY` GitHub Secret |
+| `API_KEY` | *(required)* | Must match `GAS_API_KEY` GitHub Secret |
 
 Generate a strong API key:
 ```bash
@@ -121,9 +125,11 @@ openssl rand -hex 32
 
 **6. Initialise the spreadsheet**
 
-- Select `setupSpreadsheet` in the function dropdown → click **▶ Run**
-- This creates 4 sheets: `admin`, `food_items`, `users`, `orders`
-- The `users` sheet has a `pin` column (col F) — add it manually if the sheet already exists
+Select `setupSpreadsheet` in the function dropdown → click **▶ Run** → authorise.
+
+This creates 4 sheets: `admin`, `food_items`, `users`, `orders`.
+
+> **Note:** The `users` sheet needs a `pin` column (col F). If the sheet already exists, add `pin` as the header in column F manually.
 
 **7. Deploy as a Web App**
 
@@ -136,16 +142,23 @@ openssl rand -hex 32
 ### Updating the backend
 
 When you change any `.gs` file:
-1. Update the file in Apps Script editor
+1. Update the file content in Apps Script editor
 2. **Deploy → Manage deployments → edit → New version → Deploy**
+
+**Files changed recently (deploy these):**
+- `Main.gs` — API key validation + new actions
+- `OrderService.gs` — PIN generation, deduplication fix, new lookup functions
+- `UserService.gs` — deduplication in display
+- `DataMapper.gs` — `pin` column in users schema
+- `Setup.gs` — `pin` in users sheet headers
 
 ---
 
 ## Frontend Deployment (GitHub Pages)
 
-### GitHub Secrets setup (required before first deploy)
+### GitHub Secrets (required before first deploy)
 
-Go to your repo → **Settings → Secrets and variables → Actions → New repository secret**:
+Go to repo → **Settings → Secrets and variables → Actions → New repository secret**:
 
 | Secret name | Value |
 |---|---|
@@ -198,10 +211,13 @@ git push
 
 ## Security
 
-- **API key** — every request from the frontend includes an API key validated by the backend
-- **Secrets** — `GAS_API_URL` and `GAS_API_KEY` are stored as GitHub Secrets, injected at deploy time, never in the repo
-- **Admin auth** — admin portal requires username/password checked against Script Properties
-- **PIN-based order lookup** — customers need both WhatsApp number + 6-digit PIN to view orders
+| Layer | Protection |
+|---|---|
+| API key | Every request includes a key validated by the backend |
+| Secrets | `GAS_API_URL` and `GAS_API_KEY` stored as GitHub Secrets, injected at deploy time |
+| Admin auth | Username/password checked against Script Properties |
+| Order lookup | Customers need WhatsApp number + 6-digit PIN |
+| PIN | Generated once per WhatsApp number, never changes |
 
 ---
 
@@ -230,24 +246,30 @@ git push
 ## Troubleshooting
 
 **API returns "Unauthorized"**
-- Check `GAS_API_KEY` GitHub Secret matches `API_KEY` in Script Properties
-- Redeploy GAS after updating Script Properties
+→ Check `GAS_API_KEY` GitHub Secret matches `API_KEY` in Script Properties. Redeploy GAS after updating.
 
 **Menu not loading**
-- Check GitHub Actions completed successfully (Actions tab)
-- Verify `GAS_API_URL` GitHub Secret is correct
+→ Check GitHub Actions completed (Actions tab). Verify `GAS_API_URL` GitHub Secret is correct.
 
 **Admin login fails**
-- Check `ADMIN_USERNAME` / `ADMIN_PASSWORD` in Script Properties
-- Default: `admin` / `admin123`
+→ Check `ADMIN_USERNAME` / `ADMIN_PASSWORD` in Script Properties. Default: `admin` / `admin123`.
 
 **My Orders shows "Invalid WhatsApp number or PIN"**
-- Customer must use the exact WhatsApp number entered when ordering
-- PIN is in the WhatsApp confirmation message (🔑 Your PIN: XXXXXX)
-- PIN is generated once per WhatsApp number and never changes
+→ Use the exact 10-digit WhatsApp number entered when ordering. PIN is in the WhatsApp confirmation message (🔑 Your PIN: XXXXXX).
+
+**Duplicate customers in admin**
+→ The deduplication fix runs automatically on the next order placement. Existing duplicates can be manually deleted from the `users` sheet — keep the row with the PIN.
 
 **GAS changes not live**
-- Must create a **New version** in Manage Deployments — saving alone is not enough
+→ Must create a **New version** in Manage Deployments — saving alone is not enough.
 
 **CSS changes not applying**
-- Run `npm run build` in `frontend/` and push the updated `public/css/app.css`
+→ Run `npm run build` in `frontend/` and push the updated `public/css/app.css`.
+
+---
+
+## About InstaShop
+
+InstaShop helps local entrepreneurs and shop owners get online instantly and reach a much larger audience. Simple, powerful, and designed for any business.
+
+**Contact:** Ramakant — ramakant.singh17@gmail.com | WhatsApp: 7045788997
